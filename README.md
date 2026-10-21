@@ -10,12 +10,18 @@ FlowCredit 认识 Founder，帮助他建立自己的 AI 公司、招聘 AI 员�
 
 ## Current status
 
-**Foundation + Persistent Work Kernel v0A + Workforce Identity & Assignment v0B1 +
+**Foundation + Persistent Work Kernel (schema v12) + Workforce Identity & Assignment v0B1 +
 Review / Repair Collaboration v0B2 + Founder Attention & Acceptance v0B3 +
 Work Continuity v0B4 + Worker Harness v0 + CodexExecAdapter v1 +
+Generic Model Worker v0A + Web Research Actuator v0B + Product Research Employee v0C +
+Founder Hiring Loop v0 + Relay Sense v0 (Laya / Jev) +
 Workforce Experience v0A + Employee Lobby v0 + Founder Workspace v0C.**
 
-已实现的是一个不依赖任何模型 provider 的持久 Work Kernel：`Company` / `Work` /
+以下里程碑段落按合并顺序保留为历史叙述；段中出现的 schema 版本号是**当时**的值，
+store 现为 **schema v12**，旧 store 沿 v1→v12 逐级迁移、保留全部历史。当前能力
+权威清单以本段开头与 [docs/contracts/](docs/contracts/) 为准。
+
+已实现的是一个不绑定任何特定模型 provider 的持久 Work Kernel：`Company` / `Work` /
 `Task` / `Artifact` / `Checkpoint` / `Activity` 在进程退出与重启后保持一致、可恢复，
 并带 generation 隔离（旧 execution 的迟到结果无法覆盖新现实）。它跑在 Node 内置的
 `node:sqlite` 上，零第三方依赖。
@@ -23,16 +29,14 @@ Workforce Experience v0A + Employee Lobby v0 + Founder Workspace v0C.**
 v0B1 在此之上加入团队身份与派工：`Position`（岗位能力）/ `Employee`（长期存在的
 AI 员工）/ `Assignment`（谁负责这项 Task）/ `WorkerRun`（一次执行尝试，带自己的
 id 与状态）。员工身份与模型、provider、执行尝试完全解耦：换 provider 不会换人，
-崩溃不会让员工永远"忙碌"。store 已是 schema v2，v0A 的旧 store 会在首次打开时
-一次性迁移并保留全部历史（旧 Artifact 的 producer 保持 `NULL`，不伪造）。
+崩溃不会让员工永远"忙碌"。（合并时为 schema v2；现为 schema v12。）
 
 v0B2 加入企业协作协议：一个员工交付 Artifact 后，另一个员工可以正式 **Review** 它
 （`PASS` / `REQUEST_REVISION`），Review 发现问题时 Runtime 会开出带完整 lineage 的
 **Repair Task**（新的 Task，不是重开旧的），修复产出的 Artifact 通过
 `supersedesArtifactId` 取代旧版本，并且必须再次接受 Review。Review 记录不可修改，
 旧 Artifact 永不改写，循环次数不设上限。Review 之后 Work 只会变成
-`READY_FOR_DECISION` —— **Reviewer PASS ≠ Founder ACCEPT**。store 已是 schema v3，
-v1/v2 旧 store 会逐级迁移（v1 → v2 → v3）并保留全部历史。
+`READY_FOR_DECISION` —— **Reviewer PASS ≠ Founder ACCEPT**。（合并时为 schema v3。）
 
 v0B3 补上这条链路的最后一段：**Founder Attention + Founder ACCEPT**。Work 停下等待
 人类时，`WorkKernel.founderAttention({ companyId })` 会给出一个派生 projection ——
@@ -43,8 +47,7 @@ Founder 的 ACCEPT 是**唯一被持久化的人类权威动作**，写入一张
 确切的 DecisionBasis（该 Work 的 activity head）**。ACCEPT 与 Review 完全解耦：
 Review 不可能自动变成接受，接受也不会写入 Knowledge。Work 的 outcome 是派生的
 （`NO_CANDIDATE` / `READY` / `AMBIGUOUS` / `ACCEPTED`），collaboration status 仍是
-`READY_FOR_DECISION`：`ACCEPT` 是动作，`ACCEPTED` 是状态。store 已是 schema v4，
-v1/v2/v3 旧 store 会逐级迁移（v1 → v2 → v3 → v4）且不做任何历史回填。
+`READY_FOR_DECISION`：`ACCEPT` 是动作，`ACCEPTED` 是状态。（合并时为 schema v4。）
 
 v0B4 把"调度团队"这一段也交还给 Runtime：Continuation Driver 是一个**无状态执行器**
 （读真相 → 选一个合法动作 → 跑一条命令 → 重新读），没有时钟、没有队列、没有调度策略；
@@ -55,11 +58,10 @@ v0B4 把"调度团队"这一段也交还给 Runtime：Continuation Driver 是一
 fail-closed 强制；`WORK_ALREADY_ACTIVATED` 是良性收敛而不是失败。跨 Work 的唤醒只是
 "公司人力事实变了（run 结束 / enabled 变化 / 新员工）→ 重新读真相"的信号：不写别的
 Work 的 Activity、不推进它的 basis、没有持久队列、没有 event bus。新增 append-only 的
-`continuation_traces`（仅供观测，永不作为决策输入）；v0B4 时 store 为 schema v6，v1–v5 旧
-store 会逐级迁移（v1 → v2 → v3 → v4 → v5 → v6）且不做任何历史回填。
+`continuation_traces`（仅供观测，永不作为决策输入）。（合并时为 schema v6。）
 
 Backend Founder Work Loop v0A 增加独立的 `CreateFounderWork` 产品命令和不可变的
-Work 级本地执行绑定（仓库指纹 + 固定 commit，不存绝对路径）；当前 store 为 schema v7。
+Work 级本地执行绑定（仓库指纹 + 固定 commit，不存绝对路径）。
 默认 Runtime 仍不开启协调或 Worker backend。契约见
 [`docs/contracts/backend-founder-work-loop-v0a.md`](docs/contracts/backend-founder-work-loop-v0a.md)。
 
@@ -139,7 +141,17 @@ Reviewer PASS 不会经由此层变成 ACCEPTED。Pixel Lobby（PR #1）已由 *
 `apps/workspace`（`/workspace`）：主 Work lineage、Needs You、AI Workforce、Recent
 Deliveries 与 Company Pulse 全部来自 `GET /experience/companies/:id/workspace` 的**单一投影**，
 每 ~2 秒整体替换；工作台自身**没有任何写路径**（`+ 新建 Work` 是诚实的禁用占位，ACCEPT 的
-执行属于 Founder Decision UI 里程碑）。Laya / Jev、General A2A 均未开始。
+执行属于 Founder Decision UI 里程碑）。
+
+在此之上，执行层已接入**通用模型员工循环**：`GenericModelWorkerAdapter`（Host 授权的
+ToolSession + 有界模型循环）+ `DeepSeekModelBackend`（OpenAI 兼容 Chat Completions）
++ `WebResearchActuator`（`research.web.search` / `research.web.read`，SSRF 加固的只读
+公共 web 观测）。产品层已有 **Nova 选品研究员工**（`packages/product/product-research.mjs`）
+与 **Founder Hiring Loop v0**（草稿 → 试用 Work → 真实模型执行 → 评审 → Founder 确认，
+`packages/product/founder-hiring.mjs` / `employee-hiring.mjs` + `/workspace` 招聘页）。
+观测面 **Relay Sense v0** 已实现（`packages/runtime/relay-sense.mjs` +
+`jev-sense-backend.mjs` / `laya-shadow-sensor.mjs`：Champion/Challenger 双传感器、
+仅观测、永不作为决策输入）。General A2A 仍未开始。
 
 - 契约：[Persistent Work Kernel v0A](docs/contracts/persistent-work-kernel-v0.md) ·
   [Workforce Identity & Assignment v0B1](docs/contracts/workforce-identity-assignment-v0.md) ·
@@ -153,20 +165,25 @@ Deliveries 与 Company Pulse 全部来自 `GET /experience/companies/:id/workspa
   · [Employee Lobby v0](docs/contracts/employee-lobby-v0.md)
   · [Founder Workspace v0](docs/contracts/founder-workspace-v0.md)
   · [Relay Code Desktop v0](docs/contracts/relay-code-desktop-v0.md)
+  · [Desktop Worker Backend Discovery v0](docs/contracts/desktop-worker-backend-discovery-v0.md)
+  · [Founder Workspace Product Integration v1](docs/contracts/founder-workspace-product-integration-v1.md)
+  · [Generic Model Worker v0A](docs/contracts/generic-model-worker-v0a.md)
+  · [Web Research Actuator v0B](docs/contracts/web-research-actuator-v0b.md)
+  · [Product Research Employee v0C](docs/contracts/product-research-employee-v0c.md)
 - 演示：`node scripts/demo-work-kernel.mjs` · `node scripts/demo-workforce-v0b1.mjs` ·
   `node scripts/demo-review-repair-v0b2.mjs` · `node scripts/demo-founder-acceptance-v0b3.mjs` ·
   `node scripts/demo-work-continuity-v0b4.mjs` · `node scripts/demo-worker-harness-v0.mjs`
 - UI：Founder Workspace v0C 是产品主页（单一投影、LIVE 只读、无写路径、未完成区域为诚实占位）；
   可禁用的 AI 员工像素大厅与工牌 UI 由同一层 Runtime 投影驱动（LIVE 只读、状态 fail closed、
-  `?demo=1` 为显式模拟）。Canvas 持久化、公司级 Activity、Founder Work 定义与 Founder
-  Decision UI、Hiring / Genesis、Laya / Jev、General A2A 均未开始。协调由确定性的
+  `?demo=1` 为显式模拟）。Company Canvas 持久化、公司级 Activity、Founder Work 定义与
+  Founder Decision UI、Company Genesis、General A2A 均未开始。协调由确定性的
   Continuation Driver 完成（不是 scheduler / event bus / 持久队列）；执行由 WorkerHost +
-  `codex-exec` backend 完成（另有确定性的 test backend 用于测试）。
+  `codex-exec` backend / DeepSeek 通用模型员工循环完成（另有确定性的 test backend 用于测试）。
 
-Three MVPs: **still not complete.** Company Genesis、AI Workforce Loop、AI Hiring Loop
-都还没有实现——Kernel 只是它们共同的 Runtime 地基。真实模型执行已经接通
-（`CodexExecAdapter` + H1），但 Company Genesis / AI Hiring Loop 尚未开始，
-AI Workforce Loop 也还没有被正式宣布 PASS。
+Three MVPs: **still not complete.** Company Genesis 还没有实现；AI Hiring Loop 已实现
+Founder 侧闭环（草稿 → 试用 → 评审 → 确认，`docs/contracts/` 与
+`packages/product/founder-hiring.mjs`）但尚未做正式 closure 审核；AI Workforce Loop
+也还没有被正式宣布 PASS。Kernel 是三者共同的 Runtime 地基。
 
 v0B3 记录了一个 **AI Workforce MVP closure gate**：
 
@@ -329,13 +346,18 @@ docs/contracts/   Persistent Work Kernel v0A 契约
                      路径、诚实占位与已记录缺口）
 docs/migration/   旧仓库能力迁移清单与 provenance
 packages/         company（公司根对象）/ work（Work、Task、生命周期、协作、outcome 与
-                  Continuation Policy 投影）/ decision（Founder Decision 记录）/
+                  Continuation Policy 投影；validation.mjs 为共享有界校验原语）/
+                  decision（Founder Decision 记录）/
                   planning（确定性 NextActionProposer）/ workforce（Position、Employee、
                   Assignment、WorkerRun、Work Packet、dispatchability）/
                   harness（WorkerAdapter 契约、WorkerHost、角色化 ResultContract、
                   执行绑定与 workspace 布局、确定性 test backend、真实
-                  CodexExecAdapter 与 prompt/结果解析）/
-                  runtime（命令、存储、schema 迁移、Continuation Driver）/
+                  CodexExecAdapter、GenericModelWorkerAdapter + DeepSeekModelBackend
+                  与 WebResearchActuator 工具面、prompt/结果解析）/
+                  runtime（命令、存储、schema v12 迁移、Continuation Driver、
+                  Relay Sense v0（jev / laya 传感器后端）与 secret provider）/
+                  product（Founder Work 绑定、Founder Hiring、Employee Hiring、
+                  Nova 选品研究）/
                   experience（Workforce Experience v0：从 Runtime truth 派生的只读产品投影）
 apps/runtime/     Kernel 的最小运行时进程（health/status + 命令 seam + Founder Attention 与
                   Workforce Experience 只读投影端点）
@@ -343,7 +365,12 @@ apps/workspace/   产品主页静态壳与客户端（Experience 投影的只读
 apps/employee/    AI 员工像素大厅与工牌静态壳（同一 Experience 投影的只读客户端；唯一 Founder
                   写操作是启用/停用员工）
 fixtures/         种子数据（system workforce roster），不属于核心语言
-scripts/          check、重启演示、进程 harness 与 H1 真实执行场景
+scripts/          check、重启演示、进程 harness 与 H1 真实执行场景。另有未列入上方
+                  命令清单的支持脚本：`demo-founder-work-v0a.mjs`（Founder Work 绑定
+                  演示）、`seed-system-workforce.mjs`（写入 fixtures 种子员工）、
+                  `smoke-web-read-v0b.mjs` / `smoke-nova-real-read.mjs`（真实网页阅读
+                  冒烟，需网络）、`manual-*-proof.mjs` ×3（里程碑人工证据脚本）、
+                  `desktop-codex-discovery-smoke.mjs`（Desktop 后端发现冒烟）
 tests/            smoke / 单元 / 集成测试（node --test）
 ```
 
