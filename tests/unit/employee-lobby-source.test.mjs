@@ -45,7 +45,9 @@ test('every recorded Activity kind has product language: the UI never renders a 
   const { EVENTS, LEGACY_LIFECYCLE_KINDS } = await import('../../packages/runtime/events.mjs');
   const app = source['app.mjs'];
   for (const kind of [...Object.values(EVENTS), ...LEGACY_LIFECYCLE_KINDS]) {
-    assert.ok(app.includes(`'${kind}'`) || app.includes(`${kind}:`) || app.includes(`'${kind}':`), `activityNames must cover ${kind}`);
+    assert.ok(app.includes(`'${kind}'`) || app.includes(`"${kind}"`) ||
+      app.includes(`${kind}:`) || app.includes(`'${kind}':`) || app.includes(`"${kind}":`),
+      `activityNames must cover ${kind}`);
   }
   assert.doesNotMatch(app, /activityNames\[record\.kind\]\s*\?\?\s*record\.kind/, 'unknown kinds must fail closed');
 });

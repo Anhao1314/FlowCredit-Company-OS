@@ -52,7 +52,7 @@ test('the LIVE source is the workspace projection and nothing lower-level', () =
   assert.match(adapter, /\/experience\/companies\//);
   assert.match(adapter, /\/experience\/employees\//);
   assert.match(adapter, /\/experience\/works\//);
-  assert.match(adapter, /'\/companies'/);
+  assert.match(adapter, /['"]\/companies['"]/);
   assert.doesNotMatch(adapter, /\/workforce/);
   assert.doesNotMatch(adapter, /\/attention/);
   const app = source['app.mjs'];
@@ -79,8 +79,8 @@ test('Founder subpages keep hiring read only and avoid fake decisions', () => {
   const subpages = source['subpages.mjs'];
   for (const id of ['work', 'artifacts', 'hiring', 'knowledge', 'settings'])
     assert.match(source['domain.mjs'], new RegExp(`id: '${id}'.*kind: 'SUBPAGE'`));
-  assert.match(subpages, /hiring: .*source: 'READ_ONLY'/);
-  assert.match(subpages, /source: 'LIVE'/);
+  assert.match(subpages, /hiring: .*source: ['"]READ_ONLY['"]/);
+  assert.match(subpages, /source: ['"]LIVE['"]/);
   assert.match(source['company-hiring.mjs'], /试用通过不自动聘用/);
   assert.match(source['company-hiring.mjs'], /关闭后不会留下岗位或候选员工/);
   assert.match(subpages, /尚未提供交付内容预览/);
@@ -91,7 +91,7 @@ test('Founder subpages keep hiring read only and avoid fake decisions', () => {
 
 test('the workforce widget links to the merged Lobby and reuses its assets', () => {
   const app = source['app.mjs'];
-  assert.match(app, /'\/employees'/);
+  assert.match(app, /['"]\/employees['"]/);
   assert.match(app, /\/employee-assets\/assets\/portrait-/);
   assert.match(app, /projection\?\.founderAssistant/);
   assert.match(app, /\/employee-assets\/sprite-motion\.mjs/);
@@ -119,7 +119,7 @@ test('the page shell serves the Workspace client and text nodes only', () => {
   assert.match(page, /\/workspace-assets\/app\.mjs/);
   assert.match(page, /工作台/);
   assert.doesNotMatch(page, /<script(?![^>]*src=)/);
-  assert.match(source['server.mjs'], /'icons\.mjs'/);
+  assert.match(source['server.mjs'], /['"]icons\.mjs['"]/);
   assert.match(source['app.mjs'], /symbol\(id\)/);
   assert.match(source['subpages.mjs'], /symbol\(state\.id\)/);
   assert.match(page, /id="page-popover-mark"/);
