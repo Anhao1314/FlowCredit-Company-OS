@@ -6,8 +6,8 @@
   "description": "Relay Code desktop shell for the FlowCredit Runtime.",
   "type": "module",
   "main": "src/main.mjs",
-  "engines": {
-    "node": ">=22.12.0"
+    "engines": {
+    "node": ">=24.19.0 <25"
   },
   "scripts": {
     "start": "env -u ELECTRON_RUN_AS_NODE electron .",

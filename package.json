@@ -2,7 +2,7 @@
   "name": "flowcredit",
   "version": "0.0.0",
   "private": true,
-  "description": "FlowCredit — Personal AI Company OS. Persistent work kernel with deterministic workforce coordination and an optional employee lobby UI. No model providers.",
+  "description": "FlowCredit — Personal AI Company OS. Persistent work kernel with deterministic workforce coordination, a generic model worker loop and an optional employee lobby UI. Zero third-party runtime dependencies.",
   "type": "module",
   "engines": {
     "node": ">=24.19.0 <25"

@@ -32,3 +32,6 @@ coverage/
 # OS noise
 .DS_Store
 *.tgz
+
+# Local agent workspace state
+.workbuddy/
