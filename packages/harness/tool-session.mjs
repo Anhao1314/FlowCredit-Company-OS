@@ -2,6 +2,7 @@
 // Organizational capabilities establish eligibility; only the explicit
 // approvedCapabilities input can grant an execution tool.
 import { digestOf } from "../work/records.mjs";
+import { isPlainObject, jsonByteLength } from "../work/validation.mjs";
 import { randomUUID } from "node:crypto";
 
 const MAX_TOOL_CALLS = 32;
@@ -17,12 +18,10 @@ export class ToolSessionError extends Error {
   }
 }
 
-const plain = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
-const bytes = (value) => Buffer.byteLength(JSON.stringify(value));
 
 function sourceOutput(output) {
   const observation = output?.sourceObservation;
-  if (!plain(output) || Object.keys(output).length !== 1 || !plain(observation) ||
+  if (!isPlainObject(output) || Object.keys(output).length !== 1 || !isPlainObject(observation) ||
       Object.keys(observation).some((key) => !["canonicalUrl", "title", "observedAt", "contentDigest", "content"].includes(key)) ||
       typeof observation.canonicalUrl !== "string" || Buffer.byteLength(observation.canonicalUrl) > 2048 ||
       (observation.title !== null && (typeof observation.title !== "string" || observation.title.length > 200)) ||
@@ -90,7 +89,7 @@ export function createToolBudget({
     throw new Error("maxElapsedMs must be positive");
   if (!Number.isInteger(toolTimeoutMs) || toolTimeoutMs < 1 || toolTimeoutMs > maxElapsedMs)
     throw new Error("toolTimeoutMs must be positive and at most maxElapsedMs");
-  if (!plain(maxCallsByCapability)) throw new Error("maxCallsByCapability must be an object");
+  if (!isPlainObject(maxCallsByCapability)) throw new Error("maxCallsByCapability must be an object");
   if (Object.keys(maxCallsByCapability).length > MAX_TOOL_CALLS)
     throw new Error("maxCallsByCapability is too large");
   const limits = {};
@@ -160,7 +159,7 @@ export function createAuthorizedToolSession({ run, grant, budget, actuators = []
       if (typeof callId !== "string" || !callId || callId.length > 80 || seen.has(callId))
         fail("TOOL_PROTOCOL_ERROR", "invalid or repeated tool callId");
       seen.add(callId);
-      if (typeof capability !== "string" || capability.length > 80 || !CAPABILITY.test(capability) || !plain(input))
+      if (typeof capability !== "string" || capability.length > 80 || !CAPABILITY.test(capability) || !isPlainObject(input))
         fail("TOOL_PROTOCOL_ERROR", "malformed tool request", callId, capability ?? null);
       let encodedInput;
       try { encodedInput = JSON.stringify(input); } catch { /* malformed model data */ }
@@ -196,7 +195,7 @@ export function createAuthorizedToolSession({ run, grant, budget, actuators = []
         let output = await actuator.invoke({ capability, input, signal: attempt.signal });
         if (controller.signal.aborted || signal?.aborted) throw new ToolSessionError("ABORTED", "tool session was cancelled");
         if (attempt.signal.aborted) throw new ToolSessionError("TOOL_TIMEOUT", "tool invocation timed out");
-        if (!plain(output) || bytes(output) > MAX_TOOL_OUTPUT_BYTES)
+        if (!isPlainObject(output) || jsonByteLength(output) > MAX_TOOL_OUTPUT_BYTES)
           throw new ToolSessionError("TOOL_OUTPUT_INVALID", "tool output must be a bounded object");
         let source = null;
         if (actuator.sourceObservationCapabilities?.includes(capability)) {
@@ -204,7 +203,7 @@ export function createAuthorizedToolSession({ run, grant, budget, actuators = []
           let sourceId;
           do { sourceId = `src_${randomUUID()}`; } while (issuedSourceIds.has(sourceId));
           output = Object.freeze({ sourceObservation: Object.freeze({ sourceId, ...observation }) });
-          if (bytes(output) > MAX_TOOL_OUTPUT_BYTES)
+          if (jsonByteLength(output) > MAX_TOOL_OUTPUT_BYTES)
             throw new ToolSessionError("TOOL_OUTPUT_INVALID", "source observation exceeds tool output limit");
           const url = new URL(observation.canonicalUrl);
           source = Object.freeze({

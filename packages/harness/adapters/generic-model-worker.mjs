@@ -1,6 +1,7 @@
 // One WorkerRun, one bounded in-memory model/tool loop, one final candidate.
 // The model requests; the Host-owned session authorizes; an Actuator acts.
 import { digestOf } from "../../work/records.mjs";
+import { isPlainObject } from "../../work/validation.mjs";
 import { newWorkerEvent } from "../events.mjs";
 import { assertModelBackend } from "../model-backend.mjs";
 import { ToolSessionError } from "../tool-session.mjs";
@@ -10,7 +11,6 @@ export const GENERIC_MODEL_WORKER_ADAPTER_VERSION = "0.1.0";
 const MAX_CONTEXT_BYTES = 256 * 1024;
 const MAX_MODEL_STEP_BYTES = 128 * 1024;
 
-const plain = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 const adapterBackends = new WeakMap();
 export function runtimeModelBackendForAdapter(adapter) {
   return adapterBackends.get(adapter) ?? null;
@@ -32,19 +32,19 @@ function modelPacketForReview(packet, contract) {
 function normalizeStep(raw) {
   let encoded;
   try { encoded = JSON.stringify(raw); } catch { /* malformed provider data */ }
-  if (!plain(raw) || typeof encoded !== "string" || Buffer.byteLength(encoded) > MAX_MODEL_STEP_BYTES)
+  if (!isPlainObject(raw) || typeof encoded !== "string" || Buffer.byteLength(encoded) > MAX_MODEL_STEP_BYTES)
     throw new ToolSessionError("MODEL_PROTOCOL_ERROR", "model step is not a bounded object");
   const keys = Object.keys(raw);
   const exact = (allowed) => keys.every((key) => allowed.includes(key));
   if (raw.type === "TOOL_REQUEST") {
     if (!exact(["type", "callId", "capability", "input"]) ||
         typeof raw.callId !== "string" || !raw.callId || raw.callId.length > 80 ||
-        typeof raw.capability !== "string" || raw.capability.length > 80 || !plain(raw.input))
+        typeof raw.capability !== "string" || raw.capability.length > 80 || !isPlainObject(raw.input))
       throw new ToolSessionError("MODEL_PROTOCOL_ERROR", "malformed TOOL_REQUEST");
     return raw;
   }
   if (raw.type === "FINAL_RESULT") {
-    if (!exact(["type", "candidate"]) || !plain(raw.candidate))
+    if (!exact(["type", "candidate"]) || !isPlainObject(raw.candidate))
       throw new ToolSessionError("MODEL_PROTOCOL_ERROR", "malformed FINAL_RESULT");
     return raw;
   }

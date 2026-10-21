@@ -8,6 +8,7 @@
 // Host observation is not a verification verdict. The Host parses the result
 // and submits only what the Runtime command accepts.
 import { BOUNDS, digestOf } from "../work/records.mjs";
+import { boundedText, isPlainObject } from "../work/validation.mjs";
 import { REVIEW_VERDICT_VALUES } from "../workforce/reviews.mjs";
 
 export const WORKER_RESULT_VERSION = 1;
@@ -61,11 +62,6 @@ export const HARNESS_BOUNDS = Object.freeze({
   nextActionMax: 300,
   eventKindsMax: 32,
 });
-
-const isPlainObject = (value) =>
-  Boolean(value) && typeof value === "object" && !Array.isArray(value);
-
-const boundedText = (value, max) => typeof value === "string" && value.length > 0 && value.length <= max;
 
 // The Host's parsing boundary. Production adapters may hand over a raw payload
 // plus their own parse result; the Host only accepts a payload that parses to a

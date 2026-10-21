@@ -33,6 +33,7 @@ import {
 } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { randomUUID } from "node:crypto";
+import { isPlainObject } from "../../work/validation.mjs";
 import { BOUNDS, digestOf } from "../../work/records.mjs";
 import { newWorkerEvent } from "../events.mjs";
 import { HARNESS_BOUNDS } from "../result.mjs";
@@ -62,9 +63,6 @@ const KNOWN_LIMITATIONS = Object.freeze([
   "no network policy is enforced by this adapter; the child inherits the host environment",
   "TMPDIR, TMP and TEMP point at the run scratch directory by intent, not by proof",
 ]);
-
-const isPlainObject = (value) =>
-  Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
 const bound = (text, max) => (typeof text === "string" ? text.slice(0, max) : null);
 

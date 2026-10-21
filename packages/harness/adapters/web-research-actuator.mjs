@@ -1,14 +1,13 @@
 // Read-only external observation behind the Host's authorized tool session.
 import { ToolSessionError } from "../tool-session.mjs";
 import { assertSearchProvider } from "../search-provider.mjs";
+import { isPlainObject, onlyAllowedKeys } from "../../work/validation.mjs";
 import { createWebReader, isNetworkWebReader } from "../web-reader.mjs";
 import { parsePublicWebUrl, WEB_LIMITS } from "../web-network-policy.mjs";
 
 export const WEB_SEARCH = "research.web.search";
 export const WEB_READ = "research.web.read";
 const protocol = (message) => new ToolSessionError("TOOL_PROTOCOL_ERROR", message);
-const plain = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
-const exact = (value, keys) => plain(value) && Object.keys(value).every((key) => keys.includes(key));
 const networkActuators = new WeakSet();
 export function isNetworkWebResearchActuator(actuator) { return networkActuators.has(actuator); }
 
@@ -23,7 +22,7 @@ export function createWebResearchActuator({ searchProvider = null, reader = crea
     async invoke({ capability, input, signal }) {
       if (signal?.aborted) throw new ToolSessionError("ABORTED", "web operation cancelled");
       if (capability === WEB_SEARCH) {
-        if (!exact(input, ["query", "limit"]) || typeof input.query !== "string" ||
+        if (!onlyAllowedKeys(input, ["query", "limit"]) || typeof input.query !== "string" ||
             !input.query.trim() || input.query.length > 300 ||
             (input.limit !== undefined && (!Number.isInteger(input.limit) || input.limit < 1 || input.limit > WEB_LIMITS.searchResults)))
           throw protocol("invalid web search input");
@@ -39,7 +38,7 @@ export function createWebResearchActuator({ searchProvider = null, reader = crea
         if (!Array.isArray(candidates) || candidates.length > limit)
           throw new ToolSessionError("WEB_SEARCH_INVALID", "search provider returned too many or invalid candidates");
         const results = candidates.map((candidate) => {
-          if (!exact(candidate, ["url", "title", "snippet"]) ||
+          if (!onlyAllowedKeys(candidate, ["url", "title", "snippet"]) ||
               typeof candidate.url !== "string" ||
               (candidate.title !== undefined && (typeof candidate.title !== "string" || candidate.title.length > 200)) ||
               (candidate.snippet !== undefined && (typeof candidate.snippet !== "string" || candidate.snippet.length > 500)))
@@ -50,7 +49,7 @@ export function createWebResearchActuator({ searchProvider = null, reader = crea
         return Object.freeze({ results: Object.freeze(results) });
       }
       if (capability === WEB_READ) {
-        if (!exact(input, ["url"]) || typeof input.url !== "string")
+        if (!onlyAllowedKeys(input, ["url"]) || typeof input.url !== "string")
           throw protocol("web read accepts only a URL; sourceId cannot be supplied");
         const sourceObservation = await reader.read({ url: input.url, signal });
         if (signal?.aborted) throw new ToolSessionError("ABORTED", "web read cancelled");

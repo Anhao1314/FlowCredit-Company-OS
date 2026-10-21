@@ -5,11 +5,12 @@ import { createAuthorizedWebReadActuator, createWebResearchActuator, WEB_READ } 
 import { createWebReader } from "../harness/web-reader.mjs";
 import { createTrustedDohResolver } from "../harness/web-doh-resolver.mjs";
 import { parsePublicWebUrl } from "../harness/web-network-policy.mjs";
+import { boundedText } from "../work/validation.mjs";
 
 const TRIAL_KIND = "EmployeeCustomerResearchTrial.v0";
 const TRIAL_ARTIFACT_KIND = "customer-insight-trial";
 const FOLLOWUP_KIND = "CapabilityCustomerResearch.v0";
-const boundedText = value => typeof value === "string" && value.length > 0 && value.length <= 800;
+const boundedText800 = (value) => boundedText(value, 800);
 
 export function validateCustomerInsightTrial({ run, proposedArtifact, observedSources = [] } = {}) {
   if (proposedArtifact?.kind !== TRIAL_ARTIFACT_KIND)
@@ -24,8 +25,8 @@ export function validateCustomerInsightTrial({ run, proposedArtifact, observedSo
       body.schemaVersion !== 1 || !Array.isArray(body.observations) || body.observations.length > 12 ||
       !Array.isArray(body.hypotheses) || body.hypotheses.length > 12 ||
       !Array.isArray(body.unknowns) || body.unknowns.length < 1 || body.unknowns.length > 12 ||
-      ![...body.observations, ...body.hypotheses, ...body.unknowns].every(boundedText) ||
-      !boundedText(body.limitations))
+      ![...body.observations, ...body.hypotheses, ...body.unknowns].every(boundedText800) ||
+      !boundedText800(body.limitations))
     return { ok: false, code: "TRIAL_ARTIFACT_SCHEMA_INVALID" };
   if (!Array.isArray(body.sourceIds) || body.sourceIds.length !== 1 ||
       typeof body.sourceIds[0] !== "string" || !/^src_[0-9a-f-]{36}$/.test(body.sourceIds[0]) ||
@@ -53,8 +54,8 @@ export function validateCustomerResearchDelivery({ run, proposedArtifact, observ
       body.schemaVersion !== 1 || body.evidenceArtifactId !== goal.evidenceArtifactId ||
       body.evidenceArtifactDigest !== goal.evidenceArtifactDigest ||
       ![body.observations, body.hypotheses, body.unknowns].every(list =>
-        Array.isArray(list) && list.length <= 12 && list.every(boundedText)) ||
-      body.unknowns.length < 1 || !boundedText(body.limitations))
+        Array.isArray(list) && list.length <= 12 && list.every(boundedText800)) ||
+      body.unknowns.length < 1 || !boundedText800(body.limitations))
     return { ok: false, code: "RESEARCH_SCHEMA_INVALID" };
   return { ok: true };
 }

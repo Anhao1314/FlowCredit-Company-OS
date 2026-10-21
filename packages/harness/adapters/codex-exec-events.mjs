@@ -7,13 +7,11 @@
 // WorkerHost validates provider-neutrally. Reasoning payloads are dropped at
 // this boundary — never mapped, never persisted, never reported.
 import { newWorkerEvent } from "../events.mjs";
+import { isPlainObject } from "../../work/validation.mjs";
 
 export const CODEX_FINAL_MESSAGE_MAX_BYTES = 256 * 1024;
 const AGENT_MESSAGE_MAX_BYTES = 64 * 1024;
 const MAX_JSONL_LINE_BYTES = 256 * 1024;
-
-const isPlainObject = (value) =>
-  Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
 const byteLength = (text) => Buffer.byteLength(text, "utf8");
 

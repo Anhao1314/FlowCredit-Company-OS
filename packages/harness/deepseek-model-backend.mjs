@@ -1,5 +1,7 @@
 // One provider-specific ModelBackend. The GenericModelWorkerAdapter retains
 // the run-scoped loop; this module never grants tools or writes Runtime facts.
+import { isPlainObject } from "../work/validation.mjs";
+
 export const DEEPSEEK_SECRET_NAME = "model.deepseek";
 export const DEEPSEEK_MODEL = "deepseek-flash";
 export const DEEPSEEK_ENDPOINT = "https://api.deepseek.com/chat/completions";
@@ -25,16 +27,15 @@ const INSTRUCTIONS = [
   "The proposed Artifact kind and content schema come from the active Skill. Do not copy a generic example in place of the Skill's contract.",
 ].join("\n");
 
-const plain = value => value !== null && typeof value === "object" && !Array.isArray(value);
 function validStepShape(step) {
-  if (!plain(step)) return false;
+  if (!isPlainObject(step)) return false;
   const keys = Object.keys(step);
   if (step.type === "TOOL_REQUEST") return keys.length === 4 &&
     ["type", "callId", "capability", "input"].every(key => Object.hasOwn(step, key)) &&
     typeof step.callId === "string" && step.callId.length > 0 && step.callId.length <= 80 &&
-    typeof step.capability === "string" && step.capability.length <= 80 && plain(step.input);
+    typeof step.capability === "string" && step.capability.length <= 80 && isPlainObject(step.input);
   if (step.type === "FINAL_RESULT") return keys.length === 2 &&
-    Object.hasOwn(step, "candidate") && plain(step.candidate);
+    Object.hasOwn(step, "candidate") && isPlainObject(step.candidate);
   return false;
 }
 
@@ -110,7 +111,7 @@ export function createDeepSeekModelBackend({ secretProvider, fetchImpl = fetch, 
           return step;
         }
         if (attempt === 1) {
-          if (!plain(step)) throw new Error("DeepSeek completion is not a JSON object");
+          if (!isPlainObject(step)) throw new Error("DeepSeek completion is not a JSON object");
           return step; // The existing GenericModelWorkerAdapter rejects the malformed step.
         }
       }

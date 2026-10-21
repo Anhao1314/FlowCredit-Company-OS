@@ -9,7 +9,6 @@
 //
 // Nothing here is stored, nothing here mutates, and nothing here reads a trace:
 // a policy that consulted history could not be replayed against truth.
-import { createHash } from "node:crypto";
 import { REVIEW_VERDICTS } from "../workforce/reviews.mjs";
 import {
   isCapability,
@@ -18,7 +17,8 @@ import {
 } from "../workforce/capabilities.mjs";
 import { deriveWorkforceDispatch } from "../workforce/dispatch.mjs";
 import { ROUTED_CAPABILITY, ROUTING_POLICY_VERSION, routeCustomerResearch } from "../workforce/capability-routing.mjs";
-import { BOUNDS } from "./records.mjs";
+import { BOUNDS, digestOf } from "./records.mjs";
+import { isPlainObject } from "./validation.mjs";
 import { TASK_STATES } from "./work.mjs";
 import { BOUNDED_SWARM_PARALLELISM } from "./bounded-swarm.mjs";
 
@@ -466,7 +466,7 @@ export function buildDecisionState({
 }
 
 export function decisionStateDigest(state) {
-  return `sha256:${createHash("sha256").update(JSON.stringify(state), "utf8").digest("hex")}`;
+  return digestOf(JSON.stringify(state));
 }
 
 // --- NextActionProposal validation (frozen, strict) -------------------------
@@ -481,9 +481,6 @@ export const NEXT_ACTION_PROPOSAL_FIELDS = Object.freeze([
 ]);
 
 const invalid = (message) => ({ ok: false, code: "INVALID_PROPOSAL", message });
-
-const isPlainObject = (value) =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 // Total validation: unknown fields are rejected, never ignored. A proposer may
 // describe work; it may not smuggle authority (an employee, a verdict, a

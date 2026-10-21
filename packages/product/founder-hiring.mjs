@@ -9,6 +9,8 @@ const DIGEST = /^sha256:[0-9a-f]{64}$/;
 const CAPABILITIES = new Set(["customer.research", "evidence.analysis"]);
 const SKILLS = new Set(["CustomerInsight@v1", "EvidenceSynthesis@v1"]);
 const fail = (code, message) => { throw kernelError(code, message); };
+// Intentionally stricter than work/validation.isPlainObject: Founder Hiring
+// input must be a prototype-clean object literal, not any exotic object.
 const plain = value => value !== null && typeof value === "object" && !Array.isArray(value) &&
   Object.getPrototypeOf(value) === Object.prototype;
 const exact = (input, allowed, required) => {

@@ -1,5 +1,6 @@
 import { WEB_READ, WEB_SEARCH, createWebResearchActuator } from "../harness/adapters/web-research-actuator.mjs";
 import { parsePublicWebUrl } from "../harness/web-network-policy.mjs";
+import { hasExactlyKeys, isPlainObject, boundedTrimmedText } from "../work/validation.mjs";
 import { createGenericModelWorkerAdapter, GENERIC_MODEL_WORKER_ADAPTER_TYPE } from "../harness/adapters/generic-model-worker.mjs";
 import { assertAdapterManifest, assertWorkerAdapter } from "../harness/adapter.mjs";
 import { createStaticWorkerBackendResolver } from "../harness/resolver.mjs";
@@ -26,16 +27,12 @@ export const PRODUCT_SELECTION_RESEARCH_SKILL = Object.freeze({
   ]),
 });
 
-const plain = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
-const exact = (value, keys) => plain(value) && Object.keys(value).length === keys.length &&
-  keys.every((key) => Object.hasOwn(value, key));
-const text = (value, max) => typeof value === "string" && value.trim().length > 0 && value.length <= max;
-const nullableText = (value, max) => value === null || text(value, max);
+const nullableText = (value, max) => value === null || boundedTrimmedText(value, max);
 const fail = (code) => Object.freeze({ ok: false, code });
 
 function validRequest(request) {
-  if (!exact(request, ["requestKind", "category", "market", "candidateCount", "publicProductUrls"]) ||
-      request.requestKind !== PRODUCT_RESEARCH_REQUEST_KIND || !text(request.category, 120) ||
+  if (!hasExactlyKeys(request, ["requestKind", "category", "market", "candidateCount", "publicProductUrls"]) ||
+      request.requestKind !== PRODUCT_RESEARCH_REQUEST_KIND || !boundedTrimmedText(request.category, 120) ||
       request.market !== "US" || !Number.isInteger(request.candidateCount) ||
       request.candidateCount < 1 || request.candidateCount > 5 ||
       !Array.isArray(request.publicProductUrls) ||
@@ -72,7 +69,7 @@ export function validateProductResearchArtifact({ run, proposedArtifact, observe
   if (!validRequest(request))
     return fail("PRODUCT_RESEARCH_REQUEST_INVALID");
   if (proposedArtifact.kind !== PRODUCT_RESEARCH_ARTIFACT_KIND ||
-      !exact(artifact, ["schemaVersion", "category", "market", "candidates", "marketObservations", "opportunities", "risks"]) ||
+      !hasExactlyKeys(artifact, ["schemaVersion", "category", "market", "candidates", "marketObservations", "opportunities", "risks"]) ||
       artifact.schemaVersion !== PRODUCT_RESEARCH_ARTIFACT_VERSION ||
       artifact.category !== request.category || artifact.market !== request.market ||
       !Array.isArray(artifact.candidates) || artifact.candidates.length !== request.candidateCount)
@@ -84,16 +81,16 @@ export function validateProductResearchArtifact({ run, proposedArtifact, observe
     new Set(ids).size === ids.length;
   const candidateKeys = ["productName", "brand", "price", "rating", "reviewCount", "sellingPoints", "observedWeaknesses", "sourceIds"];
   for (const candidate of artifact.candidates) {
-    if (!exact(candidate, candidateKeys) || !nullableText(candidate.productName, 200) ||
+    if (!hasExactlyKeys(candidate, candidateKeys) || !nullableText(candidate.productName, 200) ||
         !nullableText(candidate.brand, 120) ||
-        !(candidate.price === null || (exact(candidate.price, ["amount", "currency"]) &&
+        !(candidate.price === null || (hasExactlyKeys(candidate.price, ["amount", "currency"]) &&
           typeof candidate.price.amount === "number" && Number.isFinite(candidate.price.amount) &&
           candidate.price.amount >= 0 && candidate.price.amount <= 1_000_000 &&
           candidate.price.currency === "USD")) ||
         !(candidate.rating === null || (typeof candidate.rating === "number" && Number.isFinite(candidate.rating) && candidate.rating >= 0 && candidate.rating <= 5)) ||
         !(candidate.reviewCount === null || (Number.isSafeInteger(candidate.reviewCount) && candidate.reviewCount >= 0 && candidate.reviewCount <= 1_000_000_000)) ||
-        !Array.isArray(candidate.sellingPoints) || candidate.sellingPoints.length > 10 || candidate.sellingPoints.some((item) => !text(item, 500)) ||
-        !Array.isArray(candidate.observedWeaknesses) || candidate.observedWeaknesses.length > 10 || candidate.observedWeaknesses.some((item) => !text(item, 500)) ||
+        !Array.isArray(candidate.sellingPoints) || candidate.sellingPoints.length > 10 || candidate.sellingPoints.some((item) => !boundedTrimmedText(item, 500)) ||
+        !Array.isArray(candidate.observedWeaknesses) || candidate.observedWeaknesses.length > 10 || candidate.observedWeaknesses.some((item) => !boundedTrimmedText(item, 500)) ||
         !validSourceIds(candidate.sourceIds))
       return fail("PRODUCT_RESEARCH_CANDIDATE_INVALID");
     referenced.push(...candidate.sourceIds);
@@ -102,7 +99,7 @@ export function validateProductResearchArtifact({ run, proposedArtifact, observe
     const entries = artifact[field];
     if (!Array.isArray(entries) || entries.length > 10) return fail("PRODUCT_RESEARCH_SCHEMA_INVALID");
     for (const entry of entries) {
-      if (!exact(entry, ["text", "sourceIds"]) || !text(entry.text, 500) || !validSourceIds(entry.sourceIds))
+      if (!hasExactlyKeys(entry, ["text", "sourceIds"]) || !boundedTrimmedText(entry.text, 500) || !validSourceIds(entry.sourceIds))
         return fail("PRODUCT_RESEARCH_SCHEMA_INVALID");
       referenced.push(...entry.sourceIds);
     }
