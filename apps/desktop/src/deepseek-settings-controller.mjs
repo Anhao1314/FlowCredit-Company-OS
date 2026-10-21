@@ -1,7 +1,8 @@
 // Desktop's packaged shell is separate from its Runtime bundle.
 export const DEEPSEEK_SECRET_NAME = "model.deepseek";
 const ENDPOINT = "https://api.deepseek.com/chat/completions";
-const MODEL = "deepseek-flash";
+// Current DeepSeek API model list: deepseek-v4-flash / deepseek-v4-pro.
+const MODEL = "deepseek-v4-flash";
 const MAX_PROBE_BYTES = 16_384;
 
 async function boundedJson(response) {
@@ -26,7 +27,7 @@ async function probeDeepSeek({ key, fetchImpl }) {
     const response = await fetchImpl(ENDPOINT, {
       method: "POST",
       headers: { authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
-      body: JSON.stringify({ model: MODEL, thinking: { type: "disabled" },
+      body: JSON.stringify({ model: MODEL,
         messages: [
           { role: "system", content: "Return one JSON object. Example JSON: {\"ping\":\"OK\"}." },
           { role: "user", content: "Return the JSON ping object with value OK." },

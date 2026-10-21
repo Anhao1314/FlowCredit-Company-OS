@@ -53,6 +53,7 @@ export { DEFAULT_WAIT_TIMEOUT_MS, HOST_STATUS, createWorkerHost } from "./host.m
 export { createEmployeeActivationResolver } from "./employee-activation.mjs";
 export { assertActuator, createAuthorizedToolSession, createToolBudget, createToolGrant, ToolSessionError } from "./tool-session.mjs";
 export { assertModelBackend, createTestModelBackend } from "./model-backend.mjs";
+export { createOpenAICompatBackend } from "./model-backends/openai-compat.mjs";
 export { createDeepSeekModelBackend, DEEPSEEK_SECRET_NAME, DEEPSEEK_MODEL } from "./deepseek-model-backend.mjs";
 export { createFakeActuator } from "./adapters/fake-actuator.mjs";
 export { assertSearchProvider } from "./search-provider.mjs";
