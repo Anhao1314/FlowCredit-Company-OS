@@ -1,7 +1,7 @@
 // Bounded, exact capability routing for Founder-created customer researchers.
 // This is a pure policy used by the existing Continuation Driver and checked
 // again by the Assignment command. It grants no tool or model authority.
-import { createHash } from "node:crypto";
+import { digestOf } from "../work/records.mjs";
 
 export const ROUTING_POLICY_VERSION = "customer-research-routing.v1";
 export const ROUTED_CAPABILITY = "customer.research";
@@ -26,7 +26,7 @@ export function canonicalCapability(value) {
   return CAPABILITY_CONTRACT.canonical.includes(value) ? value : null;
 }
 
-export const routingBasisDigest = value => `sha256:${createHash("sha256").update(JSON.stringify(value)).digest("hex")}`;
+export const routingBasisDigest = value => digestOf(JSON.stringify(value));
 
 export function routeCustomerResearch({ companyId, taskId, workId, employees = [], positions = [],
   hiringByEmployeeId = new Map(), activeEmployeeIds = [], activationSkills = [] } = {}) {

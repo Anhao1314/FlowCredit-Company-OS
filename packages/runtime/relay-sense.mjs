@@ -1,7 +1,7 @@
 // Relay Sense v0: one bounded, provider-neutral reading and question pack.
 // Signals are probabilistic observations; Runtime truth and authority stay
 // with the Kernel, Continuation policy, Reviewer and Founder.
-import { createHash } from "node:crypto";
+import { digestOf } from "../work/records.mjs";
 
 export const RELAY_SENSE_STATE_VERSION = "v0";
 export const RELAY_SENSE_QUESTION_PACK_VERSION = "v0";
@@ -70,7 +70,7 @@ export function compileRelaySenseState({ decisionState, truth, boundary }) {
 }
 
 export function relaySenseStateDigest(state) {
-  return `sha256:${createHash("sha256").update(JSON.stringify(state), "utf8").digest("hex")}`;
+  return digestOf(JSON.stringify(state));
 }
 
 export function validateRelaySenseSignals(signals) {
