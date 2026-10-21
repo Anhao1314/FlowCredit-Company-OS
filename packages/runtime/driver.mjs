@@ -506,6 +506,5 @@ export function createContinuationDriver({
       kernel.setContinuationObserver(null);
     },
     flushSense,
-    flushShadow: flushSense,
   };
 }
