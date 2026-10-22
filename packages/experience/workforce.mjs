@@ -53,7 +53,7 @@ export function deriveWorkforce({ kernel, companyId }) {
 
     let currentWork = null;
     let execution = null;
-    let role = null;
+    let role;
     if (activeRun) {
       const task = kernel.task(activeRun.taskId);
       const work = task ? kernel.work(task.workId) : null;

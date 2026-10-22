@@ -10,7 +10,7 @@
 // adapter or in the page source — Founder Authority stays at the Runtime seam
 // (docs/contracts/founder-workspace-v0.md §5).
 import { readFile } from "node:fs/promises";
-import { isLocalBrowserRequest } from "../local-origin.mjs";
+import { isLocalBrowserRequest } from "../shared/local-origin.mjs";
 
 const ROOT = new URL("./", import.meta.url);
 const ASSETS = new Set(["assistant-motion.mjs", "company-hiring.mjs", "company-hiring-domain.mjs", "company-hiring.css", "company-memory.mjs", "company-memory-domain.mjs", "company-memory.css", "scene-preference.mjs", "scene-background.mjs", "scene-background.css", "launch-mars.mp4", "launch-earth.mp4", "launch-intro.mp4", "welcome.html", "welcome.css", "welcome.mjs", "portal-geometry.mjs", "app.mjs", "adapter.mjs", "domain.mjs", "subpages.mjs", "icons.mjs", "placement.mjs", "board-layout.mjs", "company-stage.mjs", "surface-motion.mjs", "styles.css", "stage.css", "ui-tokens.css", "alpine-wallpaper.png", "flowcredit-brand.png"]);

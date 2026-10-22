@@ -32,10 +32,10 @@ import {
   MAX_AUTONOMOUS_ATTEMPTS_PER_TASK,
   createContinuationDriver,
   openKernel,
-} from "../packages/runtime/index.mjs";
-import { deterministicNextActionProposer } from "../packages/planning/next-action.mjs";
-import { createWorkerHost, createStaticWorkerBackendResolver } from "../packages/harness/index.mjs";
-import { createTestWorkerAdapter } from "../packages/harness/adapters/test-worker.mjs";
+} from "../../packages/runtime/index.mjs";
+import { deterministicNextActionProposer } from "../../packages/planning/next-action.mjs";
+import { createWorkerHost, createStaticWorkerBackendResolver } from "../../packages/harness/index.mjs";
+import { createTestWorkerAdapter } from "../../packages/harness/adapters/test-worker.mjs";
 
 const steps = [];
 const report = (step, detail) => {
@@ -153,7 +153,7 @@ try {
 
     // Everything after this point is either the Runtime's coordination or the
     // Founder's decision. Nothing here assigns, starts or dispatches anything.
-    let manualCoordination = 0;
+    const manualCoordination = 0;
     const founderCommandsAfterWork = [];
 
     await until(() => h.kernel.workProjection(work.id).status === "READY_FOR_DECISION", {

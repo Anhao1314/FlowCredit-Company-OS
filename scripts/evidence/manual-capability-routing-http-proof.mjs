@@ -4,13 +4,13 @@
 import { copyFileSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { startRuntime } from "./lib/runtime-process.mjs";
-import { openKernel, STORE_FILE_NAME } from "../packages/runtime/index.mjs";
+import { startRuntime } from "../lib/runtime-process.mjs";
+import { openKernel, STORE_FILE_NAME } from "../../packages/runtime/index.mjs";
 
 const sourceDir = process.env.FLOWCREDIT_ROUTING_SOURCE_DIR;
 const key = process.env.FLOWCREDIT_DEEPSEEK_API_KEY;
 delete process.env.FLOWCREDIT_DEEPSEEK_API_KEY;
-if (!sourceDir || !key || resolve(sourceDir).startsWith(resolve(import.meta.dirname, "..")))
+if (!sourceDir || !key || resolve(sourceDir).startsWith(resolve(import.meta.dirname, "../..")))
   throw new Error("external hired-Employee source store and execution credential are required");
 const dir = mkdtempSync(join(tmpdir(), "relay-routing-proof-"));
 copyFileSync(join(sourceDir, STORE_FILE_NAME), join(dir, STORE_FILE_NAME));

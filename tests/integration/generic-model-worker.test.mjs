@@ -437,9 +437,8 @@ test("Host.stop aborts an in-flight ModelBackend invocation without delivery", a
 });
 
 test("Host.stop after TOOL_RESULT prevents the next model step and any delivery", async () => {
-  let flow;
   let stopped = null;
-  flow = openFlow({
+  const flow = openFlow({
     steps: [
       { type: "TOOL_REQUEST", callId: "first", capability: SEARCH, input: { query: "fixture" } },
       { type: "FINAL_RESULT", candidate: artifact },

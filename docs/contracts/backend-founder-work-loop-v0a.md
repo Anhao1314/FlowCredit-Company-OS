@@ -68,7 +68,7 @@ operator choice, not an implicit UI launch side effect.
 
 ## Proof boundary
 
-`node scripts/demo-founder-work-v0a.mjs` uses a real Runtime child process,
+`node scripts/demos/demo-founder-work-v0a.mjs` uses a real Runtime child process,
 real SQLite store, `createCompany`, `bootstrapWorkforce`, product HTTP route,
 Continuation Driver and deterministic test Worker. It checks creation,
 assignment, WorkerRun, Artifact, review, idempotency, invalid input, unknown

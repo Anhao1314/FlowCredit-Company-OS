@@ -19,7 +19,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
-import { startRuntime } from "./lib/runtime-process.mjs";
+import { startRuntime } from "../lib/runtime-process.mjs";
 
 const dir = mkdtempSync(join(tmpdir(), "flowcredit-accept-demo-"));
 const steps = [];

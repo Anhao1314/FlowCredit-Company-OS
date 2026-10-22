@@ -5,8 +5,8 @@
 // Idempotent: running it twice creates nothing the second time. The seed data
 // itself lives in fixtures/seeds/system-workforce.mjs — this script only wires
 // it to the generic bootstrap command.
-import { openKernel } from "../packages/runtime/index.mjs";
-import { SYSTEM_WORKFORCE_SEED } from "../fixtures/seeds/system-workforce.mjs";
+import { openKernel } from "../../packages/runtime/index.mjs";
+import { SYSTEM_WORKFORCE_SEED } from "../../fixtures/seeds/system-workforce.mjs";
 
 const [companyId] = process.argv.slice(2);
 const dir = process.env.FLOWCREDIT_RUNTIME_DIR;

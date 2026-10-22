@@ -88,7 +88,7 @@ whole JSON content remains within the existing 100 KiB Artifact bound.
 ## Manual read smoke
 
 When no SearchProvider is configured, a Founder may supply five public product
-URLs to `node scripts/smoke-nova-real-read.mjs <url1> ... <url5>`. This uses real
+URLs to `node scripts/evidence/smoke-nova-real-read.mjs <url1> ... <url5>`. This uses real
 bounded HTTP GET reads, the existing Host tool authorization, and a
 TestModelBackend. It deliberately leaves all product facts unknown and proves
 only the real read, SourceObservation and Artifact path. It is never run by

@@ -159,7 +159,6 @@ export function compileArtifactPrompt({ input, verification, protectedPaths, bas
 export function compileReviewPrompt({ input, protectedPaths, baseSha }) {
   const packet = input.workPacket;
   const review = packet.review;
-  const workspaceRoot = input.executionBinding.workspaceRoot;
   const scratchRoot = input.executionBinding.scratchRoot;
   return [
     "You are the reviewer inside a small software company's execution harness.",

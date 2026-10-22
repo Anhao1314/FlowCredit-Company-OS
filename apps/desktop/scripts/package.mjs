@@ -22,7 +22,7 @@ const RUNTIME_PATHS = [
   "apps/runtime",
   "apps/workspace",
   "apps/employee",
-  "apps/local-origin.mjs",
+  "apps/shared/local-origin.mjs",
   "packages",
 ];
 

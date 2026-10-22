@@ -130,7 +130,7 @@ Evidence for v0B2: `tests/unit/review-request.test.mjs` (6), `review-submission.
 `review-repair-cycles.test.mjs` (3), `review-cancellation.test.mjs` (3) and the
 real-process hard restart in `tests/integration/restart.test.mjs` ("review and
 repair survive a hard restart without inventing a judgment"). The full
-collaboration is printed by `scripts/demo-review-repair-v0b2.mjs`.
+collaboration is printed by `scripts/demos/demo-review-repair-v0b2.mjs`.
 
 ## Extraction v0B3 — Founder Attention & Acceptance
 
@@ -169,7 +169,7 @@ ambiguity, staleness, idempotency, the post-acceptance guard and `ACCEPT` vs
 `ACCEPTED`), the v3 → v4 row in `tests/unit/schema-migration.test.mjs`, and the
 real-process hard restart in `tests/integration/restart.test.mjs` ("a Founder
 Decision survives a hard restart and is never re-adjudicated"). The whole path is
-printed by `scripts/demo-founder-acceptance-v0b3.mjs`.
+printed by `scripts/demos/demo-founder-acceptance-v0b3.mjs`.
 
 **Follow-on note (Work Continuity v0B4).** The "no dispatcher" gap recorded above was
 closed inside this repository by the frozen

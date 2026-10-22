@@ -5,7 +5,7 @@
 // Workforce Experience HTTP API directly (see apps/employee/adapter.mjs), so
 // the Lobby cannot drift into a second read path or a manual scheduler.
 import { readFile } from "node:fs/promises";
-import { isLocalBrowserRequest } from "../local-origin.mjs";
+import { isLocalBrowserRequest } from "../shared/local-origin.mjs";
 
 const ROOT = new URL("./", import.meta.url);
 const ASSETS = new Set([

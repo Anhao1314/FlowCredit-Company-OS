@@ -1,13 +1,13 @@
 // Manual, bounded, real HTTP Product Command proof. The key stays in the
 // execution environment; this script prints only Runtime identifiers/facts.
 import { resolve } from "node:path";
-import { startRuntime } from "./lib/runtime-process.mjs";
-import { openKernel } from "../packages/runtime/index.mjs";
+import { startRuntime } from "../lib/runtime-process.mjs";
+import { openKernel } from "../../packages/runtime/index.mjs";
 
 const dir = process.env.FLOWCREDIT_HIRING_PROOF_DIR;
 const key = process.env.FLOWCREDIT_DEEPSEEK_API_KEY;
 delete process.env.FLOWCREDIT_DEEPSEEK_API_KEY;
-if (!dir || resolve(dir).startsWith(resolve(import.meta.dirname, "..")) || !key)
+if (!dir || resolve(dir).startsWith(resolve(import.meta.dirname, "../..")) || !key)
   throw new Error("an external proof directory and an execution credential are required");
 const source = "https://www.petsafe.com/p/smart-feed/PFD00-16828/";
 let runtime;

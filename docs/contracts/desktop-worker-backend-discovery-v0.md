@@ -27,7 +27,7 @@ It does not restate how a WorkerRun becomes a `codex exec` child. That is
 - Discovery module: `apps/desktop/src/worker-backend-discovery.mjs`
 - Runtime environment composition: `apps/desktop/src/runtime-environment.mjs`
 - Override environment variable: `FLOWCREDIT_CODEX_BIN`
-- Manual real-provider smoke: `scripts/desktop-codex-discovery-smoke.mjs`
+- Manual real-provider smoke: `scripts/evidence/desktop-codex-discovery-smoke.mjs`
 
 ```text
 Relay Code.app (LaunchServices)
@@ -163,8 +163,8 @@ Launching Electron directly from a terminal is development evidence, not the
 packaged-product proof. The manual smoke script is the harness for that proof:
 
 ```sh
-node scripts/desktop-codex-discovery-smoke.mjs --mode execution
-node scripts/desktop-codex-discovery-smoke.mjs --mode quit
+node scripts/evidence/desktop-codex-discovery-smoke.mjs --mode execution
+node scripts/evidence/desktop-codex-discovery-smoke.mjs --mode quit
 ```
 
 ## 11. Real-provider smoke is local and manual

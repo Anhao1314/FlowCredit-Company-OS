@@ -2,13 +2,13 @@
 // process environment, consumes it immediately, and stores only Runtime facts.
 import { writeFile, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { openKernel, createContinuationDriver, createProcessSecretProvider } from "../packages/runtime/index.mjs";
-import { createDeepSeekModelBackend, createWorkerHost } from "../packages/harness/index.mjs";
-import { createHiringActivationResolver } from "../packages/product/employee-hiring.mjs";
-import { createFounderHiringCommands } from "../packages/product/founder-hiring.mjs";
+import { openKernel, createContinuationDriver, createProcessSecretProvider } from "../../packages/runtime/index.mjs";
+import { createDeepSeekModelBackend, createWorkerHost } from "../../packages/harness/index.mjs";
+import { createHiringActivationResolver } from "../../packages/product/employee-hiring.mjs";
+import { createFounderHiringCommands } from "../../packages/product/founder-hiring.mjs";
 
 const dir = process.env.FLOWCREDIT_HIRING_PROOF_DIR;
-if (!dir || resolve(dir).startsWith(resolve(import.meta.dirname, "..")))
+if (!dir || resolve(dir).startsWith(resolve(import.meta.dirname, "../..")))
   throw new Error("FLOWCREDIT_HIRING_PROOF_DIR must be outside the repository");
 const phase = process.argv[2];
 const proofFile = join(dir, "hiring-proof.json");

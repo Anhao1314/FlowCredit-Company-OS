@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { runFounderWorkProof } from "../../scripts/demo-founder-work-v0a.mjs";
+import { runFounderWorkProof } from "../../scripts/demos/demo-founder-work-v0a.mjs";
 
 test("Founder product command binds Work and Runtime runs it through restart", async () => {
   const result = await runFounderWorkProof();

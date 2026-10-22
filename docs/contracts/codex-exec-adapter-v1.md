@@ -319,8 +319,8 @@ H1.1 — reason closure and the real review chain:
   (execution → review → repair → re-review) through the production adapter and
   host, but no real model has yet produced a `REQUEST_REVISION`. This is an open
   evidence gap, not a known defect.
-  Reproduce with `node scripts/h1-1-codex-repair.mjs <1|2|3>` and
-  `node scripts/h1-1-codex-repair.mjs boundary <1|2|3>`.
+  Reproduce with `node scripts/evidence/h1-1-codex-repair.mjs <1|2|3>` and
+  `node scripts/evidence/h1-1-codex-repair.mjs boundary <1|2|3>`.
 - Still unobserved after H1.1: a real multi-cycle repair loop, and a real
   `WORKER_OUTPUT_REJECTED` from a real model (all rejected-delivery evidence is
   from the controlled child).

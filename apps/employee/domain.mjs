@@ -70,7 +70,7 @@ export function syncRooms(employees, previous = []) {
 
 export function cropRect(width, height, zoom = 1, x = 0, y = 0) {
   if (![width, height, zoom, x, y].every(Number.isFinite) || width <= 0 || height <= 0 || zoom < 1) throw new Error("Invalid crop");
-  let w = Math.min(width, height * PORTRAIT_RATIO) / zoom, h = w / PORTRAIT_RATIO;
+  const w = Math.min(width, height * PORTRAIT_RATIO) / zoom, h = w / PORTRAIT_RATIO;
   return { x: (width - w) / 2 * (1 + Math.max(-1, Math.min(1, x))), y: (height - h) / 2 * (1 + Math.max(-1, Math.min(1, y))), width: w, height: h };
 }
 

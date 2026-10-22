@@ -505,8 +505,8 @@ Behaviors: `complete` · `hang` · `exit` · `invalid-result` · `no-result` ·
 ## 23. Verification and demos
 
 `node scripts/check.mjs`, `node --test`,
-`node scripts/demo-work-continuity-v0b4.mjs` and
-`node scripts/demo-worker-harness-v0.mjs` must all pass. The demo runs four
+`node scripts/demos/demo-work-continuity-v0b4.mjs` and
+`node scripts/demos/demo-worker-harness-v0.mjs` must all pass. The demo runs four
 scenarios on the real Runtime seams: executed → reviewed (PASS) → Founder ACCEPT
 with `Founder Extra Touch = 0`, `Manual Coordination = 0`, `Reviews = 1` and
 `Founder Decisions before ACCEPT = 0`; a `REQUEST_REVISION` → Repair → PASS

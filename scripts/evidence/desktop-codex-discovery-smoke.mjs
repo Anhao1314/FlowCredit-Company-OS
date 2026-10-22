@@ -29,7 +29,7 @@ import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const REPOSITORY_ROOT = fileURLToPath(new URL("../", import.meta.url));
+const REPOSITORY_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const APP_NAME = "Relay Code";
 const BUNDLE_ID = "com.flowcredit.relaycode";
 
@@ -465,7 +465,7 @@ async function stateWork(app) {
   return { work, task };
 }
 
-async function runExecutionScenario({ app, appPath, runRoot, environment, discovery, work, task, options }) {
+async function runExecutionScenario({ app, appPath, runRoot, environment, discovery, work, task: _task, options }) {
   const evidenceDir = join(runRoot, "evidence");
   const lineage = makeLineageWatcher(app, discovery);
 

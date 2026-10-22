@@ -60,7 +60,7 @@ the model, session, provider and active HTTP request. A cancelled request
 returns no tool result or source. The provider contract requires its own
 implementation to stop external work on abort; no real provider is bundled.
 
-`scripts/smoke-web-read-v0b.mjs` is manual, local-only and forbidden in CI. It
+`scripts/evidence/smoke-web-read-v0b.mjs` is manual, local-only and forbidden in CI. It
 requires `FLOWCREDIT_WEB_READ_SMOKE_URL`, uses a synthetic nonpersistent tool
 session to verify Host-side source minting, and reports only bounded metadata.
 The normal suite uses fake provider, DNS and transport seams and makes no

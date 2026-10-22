@@ -170,9 +170,9 @@ ToolSession + 有界模型循环）+ `DeepSeekModelBackend`（OpenAI 兼容 Chat
   · [Generic Model Worker v0A](docs/contracts/generic-model-worker-v0a.md)
   · [Web Research Actuator v0B](docs/contracts/web-research-actuator-v0b.md)
   · [Product Research Employee v0C](docs/contracts/product-research-employee-v0c.md)
-- 演示：`node scripts/demo-work-kernel.mjs` · `node scripts/demo-workforce-v0b1.mjs` ·
-  `node scripts/demo-review-repair-v0b2.mjs` · `node scripts/demo-founder-acceptance-v0b3.mjs` ·
-  `node scripts/demo-work-continuity-v0b4.mjs` · `node scripts/demo-worker-harness-v0.mjs`
+- 演示：`node scripts/demos/demo-work-kernel.mjs` · `node scripts/demos/demo-workforce-v0b1.mjs` ·
+  `node scripts/demos/demo-review-repair-v0b2.mjs` · `node scripts/demos/demo-founder-acceptance-v0b3.mjs` ·
+  `node scripts/demos/demo-work-continuity-v0b4.mjs` · `node scripts/demos/demo-worker-harness-v0.mjs`
 - UI：Founder Workspace v0C 是产品主页（单一投影、LIVE 只读、无写路径、未完成区域为诚实占位）；
   可禁用的 AI 员工像素大厅与工牌 UI 由同一层 Runtime 投影驱动（LIVE 只读、状态 fail closed、
   `?demo=1` 为显式模拟）。Company Canvas 持久化、公司级 Activity、Founder Work 定义与
@@ -288,18 +288,18 @@ Runtime 子进程生命周期，不拥有 Company truth。固定 `electron@44.4.
 ```sh
 npm run check                       # 结构 / 密钥 / 生成物 / 核心语言与依赖检查
 npm test                            # node --test（单元 + 真实进程重启集成测试）
-node scripts/demo-work-kernel.mjs   # 持久化与恢复演示（真实进程，SIGKILL 后恢复）
-node scripts/demo-workforce-v0b1.mjs # 派工演示：员工身份跨崩溃存活，Artifact 指明 producer
-node scripts/demo-review-repair-v0b2.mjs # 协作演示：Review → Repair → 再次 Review → PASS
-node scripts/demo-founder-acceptance-v0b3.mjs # 接受演示：Founder Attention → ACCEPT → ACCEPTED（含硬重启）
-node scripts/demo-work-continuity-v0b4.mjs # 协调演示：Driver 自动派工/开工/Review/Repair（0 手动协调 + 跨 Work 唤醒）
-node scripts/demo-worker-harness-v0.mjs # 执行演示：WorkerHost + 确定性 test backend（执行→评审→ACCEPT、REVISION→Repair→PASS、超时重派与 workspace 隔离、重试预算用尽后交给 Founder）
-node scripts/h1-codex-exec.mjs smoke    # H1：真实 codex exec（需已安装并登录 Codex CLI；只写 /tmp/flowcredit-h1）
-node scripts/h1-codex-exec.mjs A        # H1：真实执行 → 真实评审 → READY_FOR_DECISION → Founder ACCEPT
-node scripts/h1-codex-exec.mjs B        # H1：真实超时 → 自动重派到新 generation 的新 workspace
-node scripts/h1-codex-exec.mjs C        # H1：结果协议失败（受控子进程）→ WORKER_PROTOCOL_ERROR
-node scripts/h1-1-codex-repair.mjs 1|2|3 # H1.1：真实执行 → 真实评审（三个场景，Reviewer 自主判定；只写 /tmp/flowcredit-h1-1）
-node scripts/h1-1-codex-repair.mjs boundary 1|2|3 # H1.1：重挂已完成的 store（coordination=off，不调用模型）→ Founder 边界 + 显式 ACCEPT
+node scripts/demos/demo-work-kernel.mjs   # 持久化与恢复演示（真实进程，SIGKILL 后恢复）
+node scripts/demos/demo-workforce-v0b1.mjs # 派工演示：员工身份跨崩溃存活，Artifact 指明 producer
+node scripts/demos/demo-review-repair-v0b2.mjs # 协作演示：Review → Repair → 再次 Review → PASS
+node scripts/demos/demo-founder-acceptance-v0b3.mjs # 接受演示：Founder Attention → ACCEPT → ACCEPTED（含硬重启）
+node scripts/demos/demo-work-continuity-v0b4.mjs # 协调演示：Driver 自动派工/开工/Review/Repair（0 手动协调 + 跨 Work 唤醒）
+node scripts/demos/demo-worker-harness-v0.mjs # 执行演示：WorkerHost + 确定性 test backend（执行→评审→ACCEPT、REVISION→Repair→PASS、超时重派与 workspace 隔离、重试预算用尽后交给 Founder）
+node scripts/evidence/h1-codex-exec.mjs smoke    # H1：真实 codex exec（需已安装并登录 Codex CLI；只写 /tmp/flowcredit-h1）
+node scripts/evidence/h1-codex-exec.mjs A        # H1：真实执行 → 真实评审 → READY_FOR_DECISION → Founder ACCEPT
+node scripts/evidence/h1-codex-exec.mjs B        # H1：真实超时 → 自动重派到新 generation 的新 workspace
+node scripts/evidence/h1-codex-exec.mjs C        # H1：结果协议失败（受控子进程）→ WORKER_PROTOCOL_ERROR
+node scripts/evidence/h1-1-codex-repair.mjs 1|2|3 # H1.1：真实执行 → 真实评审（三个场景，Reviewer 自主判定；只写 /tmp/flowcredit-h1-1）
+node scripts/evidence/h1-1-codex-repair.mjs boundary 1|2|3 # H1.1：重挂已完成的 store（coordination=off，不调用模型）→ Founder 边界 + 显式 ACCEPT
 node apps/runtime/server.mjs        # 以长期进程方式启动 Kernel
 ```
 
@@ -312,9 +312,11 @@ node apps/runtime/server.mjs        # 以长期进程方式启动 Kernel
 零运行时依赖：adapter 通过子进程调用操作者本机已安装的 Codex CLI，不引入 SDK。
 
 CI：GitHub Actions 的 `FlowCredit CI`（`.github/workflows/ci.yml`）在 `pull_request` 与 push 到
-`main` 时运行 `node scripts/check.mjs` 与 `node --test`（Node 版本取自 `.nvmrc`，权限仅
+`main` 时运行 `node scripts/check.mjs` 与 `node --test`，覆盖 Node **24.x**（支持目标，
+与 `.nvmrc`/engines 对齐）与 **22.x**（兼容性守卫）双版本矩阵（权限仅
 `contents: read`，无密钥、无网络模型调用）。CI 只是回归保护，不是 provider 验证：
-真实 Codex 证据（H1 / H1.1）仍需手动运行，见上面的命令。
+真实 Codex 证据（H1 / H1.1）仍需手动运行，见上面的命令。另有 `npm run test:coverage`
+（Node 内置覆盖率）与 `npm run lint`（dev-only ESLint，不进入运行时依赖）。
 
 ## Relationship to the old worklab repository
 
@@ -361,16 +363,17 @@ packages/         company（公司根对象）/ work（Work、Task、生命周�
                   experience（Workforce Experience v0：从 Runtime truth 派生的只读产品投影）
 apps/runtime/     Kernel 的最小运行时进程（health/status + 命令 seam + Founder Attention 与
                   Workforce Experience 只读投影端点）
+apps/shared/      apps 层共享纯函数（local-origin：浏览器请求来源判定）
 apps/workspace/   产品主页静态壳与客户端（Experience 投影的只读呈现，无 kernel、无写路径）
 apps/employee/    AI 员工像素大厅与工牌静态壳（同一 Experience 投影的只读客户端；唯一 Founder
                   写操作是启用/停用员工）
 fixtures/         种子数据（system workforce roster），不属于核心语言
-scripts/          check、重启演示、进程 harness 与 H1 真实执行场景。另有未列入上方
-                  命令清单的支持脚本：`demo-founder-work-v0a.mjs`（Founder Work 绑定
-                  演示）、`seed-system-workforce.mjs`（写入 fixtures 种子员工）、
-                  `smoke-web-read-v0b.mjs` / `smoke-nova-real-read.mjs`（真实网页阅读
-                  冒烟，需网络）、`manual-*-proof.mjs` ×3（里程碑人工证据脚本）、
-                  `desktop-codex-discovery-smoke.mjs`（Desktop 后端发现冒烟）
+scripts/          check（结构/密钥/依赖门）与 lib/（进程 harness 与 H1 fixture，测试与
+                  脚本共用）。其余按职责分组：demos/（可复现演示，README 命令均指向此）、
+                  evidence/（H1/H1.1 真实 Codex 证据、真实网页冒烟、里程碑人工证据与
+                  Desktop 后端发现冒烟）、ops/（UI 启动脚本与 fixtures 种子写入）。
+tooling/          dev-only 工具链子包（ESLint 基线；`npm run lint` 经由此处）。
+                  根 package.json 保持零依赖纪律（bootstrap 测试钉死）。
 tests/            smoke / 单元 / 集成测试（node --test）
 ```
 

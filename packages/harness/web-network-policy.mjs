@@ -108,7 +108,7 @@ export async function resolvePublicWebUrl(url, { resolveHost = resolveDns, signa
         signal?.addEventListener("abort", onAbort, { once: true });
       }),
     ]);
-  } catch (error) {
+  } catch {
     if (signal?.aborted) throw new ToolSessionError("ABORTED", "web request cancelled");
     throw new ToolSessionError("WEB_DNS_FAILED", "web host resolution failed");
   } finally {

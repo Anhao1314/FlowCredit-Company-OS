@@ -24,14 +24,14 @@
 // to judge the artifact acceptable, and that is reported as
 // REAL_REPAIR_EVIDENCE_NOT_OBSERVED rather than manufactured.
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
-import { CODEX_EXEC_ADAPTER_TYPE } from "../packages/harness/index.mjs";
-import { digestOf } from "../packages/work/records.mjs";
-import { buildH11Fixture } from "./lib/h1-1-fixture.mjs";
-import { repoRoot, startRuntime } from "./lib/runtime-process.mjs";
+import { CODEX_EXEC_ADAPTER_TYPE } from "../../packages/harness/index.mjs";
+import { digestOf } from "../../packages/work/records.mjs";
+import { buildH11Fixture } from "../lib/h1-1-fixture.mjs";
+import { repoRoot, startRuntime } from "../lib/runtime-process.mjs";
 
 const H11_ROOT = "/tmp/flowcredit-h1-1";
 const ATTEMPT_TIMEOUT_MS = 900_000;
@@ -215,13 +215,13 @@ async function main() {
     title: "Backend Engineer",
     capabilities: ["work.execute"],
   });
-  const alice = await command("createEmployee", { companyId: company.id, positionId: engineer.id, displayName: "Alice" });
+  await command("createEmployee", { companyId: company.id, positionId: engineer.id, displayName: "Alice" });
   const reviewerPosition = await command("createPosition", {
     companyId: company.id,
     title: "Code Reviewer",
     capabilities: ["work.review"],
   });
-  const iris = await command("createEmployee", {
+  await command("createEmployee", {
     companyId: company.id,
     positionId: reviewerPosition.id,
     displayName: "Iris",

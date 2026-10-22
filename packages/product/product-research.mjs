@@ -1,6 +1,6 @@
 import { WEB_READ, WEB_SEARCH, createWebResearchActuator } from "../harness/adapters/web-research-actuator.mjs";
 import { parsePublicWebUrl } from "../harness/web-network-policy.mjs";
-import { hasExactlyKeys, isPlainObject, boundedTrimmedText } from "../work/validation.mjs";
+import { hasExactlyKeys, boundedTrimmedText } from "../work/validation.mjs";
 import { createGenericModelWorkerAdapter, GENERIC_MODEL_WORKER_ADAPTER_TYPE } from "../harness/adapters/generic-model-worker.mjs";
 import { assertAdapterManifest, assertWorkerAdapter } from "../harness/adapter.mjs";
 import { createStaticWorkerBackendResolver } from "../harness/resolver.mjs";

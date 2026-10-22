@@ -1,6 +1,6 @@
 // Manual, local-only smoke. Never imported by CI or the normal test suite.
-import { createWebResearchActuator, WEB_READ } from "../packages/harness/adapters/web-research-actuator.mjs";
-import { createAuthorizedToolSession, createToolBudget, createToolGrant } from "../packages/harness/tool-session.mjs";
+import { createWebResearchActuator, WEB_READ } from "../../packages/harness/adapters/web-research-actuator.mjs";
+import { createAuthorizedToolSession, createToolBudget, createToolGrant } from "../../packages/harness/tool-session.mjs";
 
 if (process.env.CI) throw new Error("real web smoke is disabled in CI");
 const url = process.env.FLOWCREDIT_WEB_READ_SMOKE_URL;

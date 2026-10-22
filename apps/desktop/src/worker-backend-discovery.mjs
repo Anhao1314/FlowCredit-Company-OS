@@ -74,7 +74,7 @@ function editorExtensionCandidates({ home }) {
   const candidates = [];
   for (const root of [".vscode/extensions", ".vscode-insiders/extensions"]) {
     const directory = join(home, root);
-    let entries = [];
+    let entries;
     try {
       entries = readdirSync(directory, { withFileTypes: true });
     } catch {
@@ -110,7 +110,7 @@ export function validateCodexCandidatePath(candidate) {
     return Object.freeze({ ok: false, code: "PATH_MALFORMED" });
   if (!isAbsolute(candidate)) return Object.freeze({ ok: false, code: "PATH_NOT_ABSOLUTE" });
 
-  let stats = null;
+  let stats;
   try {
     stats = statSync(candidate);
   } catch {
@@ -122,7 +122,7 @@ export function validateCodexCandidatePath(candidate) {
   } catch {
     return Object.freeze({ ok: false, code: "PATH_NOT_EXECUTABLE" });
   }
-  let resolvedPath = null;
+  let resolvedPath;
   try {
     resolvedPath = realpathSync(candidate);
   } catch {

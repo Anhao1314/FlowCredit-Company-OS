@@ -20,19 +20,19 @@ import {
   MAX_AUTONOMOUS_ATTEMPTS_PER_TASK,
   createContinuationDriver,
   openKernel,
-} from "../packages/runtime/index.mjs";
+} from "../../packages/runtime/index.mjs";
 import {
   CODEX_EXEC_ADAPTER_TYPE,
   createCodexExecAdapter,
   createStaticWorkerBackendResolver,
   createWorkerHost,
-} from "../packages/harness/index.mjs";
-import { digestOf } from "../packages/work/records.mjs";
-import { buildH1Fixture } from "./lib/h1-fixture.mjs";
-import { repoRoot, startRuntime } from "./lib/runtime-process.mjs";
+} from "../../packages/harness/index.mjs";
+import { digestOf } from "../../packages/work/records.mjs";
+import { buildH1Fixture } from "../lib/h1-fixture.mjs";
+import { repoRoot, startRuntime } from "../lib/runtime-process.mjs";
 
 const H1_ROOT = "/tmp/flowcredit-h1";
-const STUB_CLI = fileURLToPath(new URL("../tests/support/stub-codex-cli.mjs", import.meta.url));
+const STUB_CLI = fileURLToPath(new URL("../../tests/support/stub-codex-cli.mjs", import.meta.url));
 const ATTEMPT_TIMEOUT_MS = 900_000;
 
 let stepNumber = 0;
@@ -271,13 +271,13 @@ async function scenarioA() {
     title: "Backend Engineer",
     capabilities: ["work.execute"],
   });
-  const alice = await command("createEmployee", { companyId: company.id, positionId: engineer.id, displayName: "Alice" });
+  await command("createEmployee", { companyId: company.id, positionId: engineer.id, displayName: "Alice" });
   const reviewer = await command("createPosition", {
     companyId: company.id,
     title: "Code Reviewer",
     capabilities: ["work.review"],
   });
-  const iris = await command("createEmployee", { companyId: company.id, positionId: reviewer.id, displayName: "Iris" });
+  await command("createEmployee", { companyId: company.id, positionId: reviewer.id, displayName: "Iris" });
   step("Founder assembles the team", "Alice → Backend Engineer [work.execute] · Iris → Code Reviewer [work.review]");
 
   const work = await command("createWork", {
@@ -303,8 +303,8 @@ async function scenarioA() {
   let tasks = (await runtime.json(`/works/${work.id}/tasks`)).tasks;
   const reviewTasks = () => tasks.filter((task) => task.title.startsWith("Review:"));
   let cycles = 1;
-  let sourceTask = tasks.find((task) => !task.title.startsWith("Review:"));
-  let sourceDetail = await runtime.json(`/tasks/${sourceTask.id}`);
+  const sourceTask = tasks.find((task) => !task.title.startsWith("Review:"));
+  const sourceDetail = await runtime.json(`/tasks/${sourceTask.id}`);
   step(
     "execution delivered through the Runtime seam",
     `task ${sourceTask.state} · runs=${sourceDetail.runs.length} · artifacts=${sourceDetail.artifacts.length}`,

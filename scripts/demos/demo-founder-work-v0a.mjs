@@ -5,8 +5,8 @@ import { mkdtempSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { openKernel } from "../packages/runtime/index.mjs";
-import { startRuntime } from "./lib/runtime-process.mjs";
+import { openKernel } from "../../packages/runtime/index.mjs";
+import { startRuntime } from "../lib/runtime-process.mjs";
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function until(fn, label) {

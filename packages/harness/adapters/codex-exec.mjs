@@ -170,7 +170,7 @@ export function validateCodexExecutablePath(value) {
     throw new Error("a Codex executable path must not contain control characters");
   if (!isAbsolute(value))
     throw new Error(`the Codex executable path must be absolute: ${label}`);
-  let stats = null;
+  let stats;
   try {
     stats = statSync(value);
   } catch {
@@ -183,7 +183,7 @@ export function validateCodexExecutablePath(value) {
   } catch {
     throw new Error(`the Codex executable is not executable: ${label}`);
   }
-  let resolvedPath = null;
+  let resolvedPath;
   try {
     resolvedPath = realpathSync(value);
   } catch {

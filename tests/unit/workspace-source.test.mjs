@@ -28,7 +28,7 @@ test('the frontend holds no kernel and imports nothing beyond its own module gra
   assert.match(server, /export function createWorkspaceRoutes/);
   for (const [, specifier] of server.matchAll(IMPORT_PATTERN))
     assert.ok(
-      specifier === '../local-origin.mjs' || specifier.startsWith('node:'),
+      specifier === '../shared/local-origin.mjs' || specifier.startsWith('node:'),
       `server.mjs must not import ${specifier}`,
     );
 });

@@ -104,7 +104,7 @@ export function createOpenAICompatBackend({
   instructions = INSTRUCTIONS,
   sleep = defaultSleep,
 } = {}) {
-  let parsedEndpoint = null;
+  let parsedEndpoint;
   try { parsedEndpoint = new URL(endpoint); } catch { parsedEndpoint = null; }
   if (!parsedEndpoint || !["http:", "https:"].includes(parsedEndpoint.protocol) ||
       typeof model !== "string" || !model || model.length > 80 || /\s/.test(model) ||

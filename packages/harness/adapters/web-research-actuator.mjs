@@ -1,7 +1,7 @@
 // Read-only external observation behind the Host's authorized tool session.
 import { ToolSessionError } from "../tool-session.mjs";
 import { assertSearchProvider } from "../search-provider.mjs";
-import { isPlainObject, onlyAllowedKeys } from "../../work/validation.mjs";
+import { onlyAllowedKeys } from "../../work/validation.mjs";
 import { createWebReader, isNetworkWebReader } from "../web-reader.mjs";
 import { parsePublicWebUrl, WEB_LIMITS } from "../web-network-policy.mjs";
 
@@ -30,7 +30,7 @@ export function createWebResearchActuator({ searchProvider = null, reader = crea
         const limit = input.limit ?? WEB_LIMITS.searchResults;
         let candidates;
         try { candidates = await searchProvider.search({ query: input.query.trim(), limit, signal }); }
-        catch (error) {
+        catch {
           if (signal?.aborted) throw new ToolSessionError("ABORTED", "web search cancelled");
           throw new ToolSessionError("WEB_SEARCH_FAILED", "search provider failed");
         }

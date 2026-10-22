@@ -6,7 +6,6 @@
 // is only the frozen WorkerEvent vocabulary and a plain candidate object the
 // WorkerHost validates provider-neutrally. Reasoning payloads are dropped at
 // this boundary — never mapped, never persisted, never reported.
-import { newWorkerEvent } from "../events.mjs";
 import { isPlainObject } from "../../work/validation.mjs";
 
 export const CODEX_FINAL_MESSAGE_MAX_BYTES = 256 * 1024;

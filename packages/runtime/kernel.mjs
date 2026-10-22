@@ -71,7 +71,6 @@ import {
   newWorkerExecutionBinding,
   newWorkerRun,
   sameExecutionBindingFacts,
-  satisfiesCapabilities,
   workPacketDigest,
 } from "../workforce/index.mjs";
 

@@ -19,13 +19,20 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      # Both versions report independently: a 22.x-only regression must not
+      # hide a 24.x one. 24.x is the support target (.nvmrc, engines <25);
+      # 22.x is a compatibility guard (node:sqlite unflagged since 22.13).
+      fail-fast: false
+      matrix:
+        node-version: ["24.x", "22.x"]
     steps:
       - name: Check out the repository
         uses: actions/checkout@v7
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version-file: .nvmrc
+          node-version: ${{ matrix.node-version }}
       - name: Print the Node version
         run: node --version
       - name: Structural check

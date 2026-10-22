@@ -54,7 +54,7 @@ if (envDump)
 const argvDump = process.env.FLOWCREDIT_STUB_ARGV_DUMP;
 if (argvDump) writeFileSync(argvDump, JSON.stringify(process.argv.slice(2)), "utf8");
 
-let prompt = "";
+let prompt;
 try {
   prompt = readFileSync(0, "utf8");
 } catch {

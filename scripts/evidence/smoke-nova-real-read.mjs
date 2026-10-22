@@ -6,13 +6,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   createTestModelBackend, WEB_READ,
-} from "../packages/harness/index.mjs";
-import { openKernel } from "../packages/runtime/index.mjs";
+} from "../../packages/harness/index.mjs";
+import { openKernel } from "../../packages/runtime/index.mjs";
 import {
   createProductResearchHost, createProductResearchWork, PRODUCT_RESEARCH_ARTIFACT_KIND,
   PRODUCT_RESEARCH_ARTIFACT_VERSION, PRODUCT_RESEARCH_CAPABILITY,
-} from "../packages/product/product-research.mjs";
-import { createNovaProductResearchSeed } from "../fixtures/seeds/nova-product-researcher.mjs";
+} from "../../packages/product/product-research.mjs";
+import { createNovaProductResearchSeed } from "../../fixtures/seeds/nova-product-researcher.mjs";
 
 const urls = process.argv.slice(2);
 if (urls.length === 1 && urls[0] === "--help") {

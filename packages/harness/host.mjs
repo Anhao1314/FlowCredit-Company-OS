@@ -236,7 +236,7 @@ export function createWorkerHost({
       knownLimitations: manifest.containment.knownLimitations,
     });
 
-    let binding = null;
+    let binding;
     try {
       const bound = kernel.bindWorkerExecution({
         workerRunId: run.id,
@@ -300,7 +300,7 @@ export function createWorkerHost({
         });
         activeGrant = grant;
         sessions.set(run.id, authorizedToolSession);
-      } catch (error) {
+      } catch {
         kernel.interruptWorkerRun({ workerRunId: run.id, generation: run.generation, reason: "WORKER_EXECUTION_FAILED" });
         report(run.id, run.generation, HOST_STATUS.INTERRUPTED, { reason: "WORKER_EXECUTION_FAILED", detail: "tool policy setup failed" });
         return;
