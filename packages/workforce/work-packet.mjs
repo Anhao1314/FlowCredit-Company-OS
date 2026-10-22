@@ -3,7 +3,7 @@
 //
 // Deterministic and bounded: built only from persisted facts, keys in a fixed
 // order, no database dump, no company history, no event log, no prompt.
-import { digestOf } from "../work/records.mjs";
+import { digestOf } from "../foundation/primitives.mjs";
 
 export const WORK_PACKET_VERSION = 2;
 export const BOUNDED_INPUT_PACKET_VERSION = 3;

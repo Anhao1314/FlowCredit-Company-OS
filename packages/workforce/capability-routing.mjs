@@ -1,7 +1,7 @@
 // Bounded, exact capability routing for Founder-created customer researchers.
 // This is a pure policy used by the existing Continuation Driver and checked
 // again by the Assignment command. It grants no tool or model authority.
-import { digestOf } from "../work/records.mjs";
+import { digestOf } from "../foundation/primitives.mjs";
 
 export const ROUTING_POLICY_VERSION = "customer-research-routing.v1";
 export const ROUTED_CAPABILITY = "customer.research";

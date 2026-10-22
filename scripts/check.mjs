@@ -1,20 +1,22 @@
 // Project check. Zero dependencies, no network, no model calls.
 //
-// It answers five questions that matter for a clean re-foundation repository:
+// It answers six questions that matter for a clean re-foundation repository:
 //   1. does the required project structure exist,
 //   2. did generated state or local tool state get tracked by mistake,
 //   3. does any tracked file contain something that looks like a credential,
 //   4. has legacy implementation been copied in (see AGENTS.md / migration manifest),
 //   5. does the product core still speak its own domain language
 //      (milestone charter §32: no legacy research vocabulary in `packages/`
-//      or `apps/runtime/`).
+//      or `apps/runtime/`),
+//   6. does the package dependency graph stay the deliberate acyclic DAG the
+//      architecture claims it is (cross-package direction allowlist, §6).
 //
 // The legacy tripwire in `LEGACY_SIGNATURES` is intentional and must be updated
 // deliberately when a capability is officially extracted.
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const failures = [];
@@ -206,6 +208,77 @@ for (const coreRoot of CORE_ROOTS) {
   }
 }
 
+// --- 6. package dependency direction ----------------------------------------
+// The package graph is a deliberate DAG: work consumes workforce policy,
+// workforce rests on the foundation primitives, nothing cycles. A
+// cross-package import that is not in the allowlist below fails the check, and
+// the allowlist itself is validated acyclic — a cycle must be broken by a
+// structural decision, never by quietly growing the graph. (The workforce→work
+// back edge that once existed is exactly what this guard keeps dead.)
+const PACKAGE_EDGES = [
+  // runtime is the composition kernel and may reach every domain package.
+  "runtime->company",
+  "runtime->decision",
+  "runtime->planning",
+  "runtime->work",
+  "runtime->workforce",
+  // product composes the harness, the runtime error vocabulary and work records.
+  "product->harness",
+  "product->runtime",
+  "product->work",
+  // harness executes work packets and speaks the workforce review vocabulary.
+  "harness->work",
+  "harness->workforce",
+  // experience projects work and workforce facts.
+  "experience->work",
+  "experience->workforce",
+  // work consumes workforce policy; both rest on the foundation primitives.
+  "work->workforce",
+  "work->foundation",
+  "workforce->foundation",
+];
+const packageOf = (path) => (path.match(/^packages\/([^/]+)\//) ?? [])[1] ?? null;
+const allowedEdges = new Set(PACKAGE_EDGES);
+for (const path of walkFiles("packages")) {
+  if (!path.endsWith(".mjs")) continue;
+  const from = packageOf(path);
+  if (!from) continue;
+  const text = readFileSync(join(root, path), "utf8");
+  for (const [, specifier] of text.matchAll(IMPORT_PATTERN)) {
+    if (!specifier.startsWith(".")) continue;
+    const to = packageOf(join(dirname(path), specifier));
+    if (!to || to === from) continue;
+    const edge = `${from}->${to}`;
+    if (!allowedEdges.has(edge))
+      failures.push(
+        `package dependency not in the direction allowlist: ${edge} (${path} imports ${specifier})`,
+      );
+  }
+}
+// The allowlist must itself stay acyclic: the guard cannot be the thing that
+// quietly permits a cycle back in.
+{
+  const adjacency = new Map();
+  for (const edge of PACKAGE_EDGES) {
+    const [from, to] = edge.split("->");
+    if (!adjacency.has(from)) adjacency.set(from, []);
+    adjacency.get(from).push(to);
+  }
+  const mark = new Map();
+  const visit = (node) => {
+    const state = mark.get(node);
+    if (state === 1) {
+      failures.push(`the package direction allowlist contains a cycle through ${node}`);
+      return;
+    }
+    if (state === 2) return;
+    mark.set(node, 1);
+    for (const next of adjacency.get(node) ?? []) visit(next);
+    mark.set(node, 2);
+  };
+  for (const node of adjacency.keys()) visit(node);
+}
+
 // --- report -----------------------------------------------------------------
 if (failures.length) {
   console.error(`FAIL (${failures.length})`);
@@ -213,6 +286,6 @@ if (failures.length) {
   process.exit(1);
 }
 console.log(
-  `OK — structure: ${REQUIRED_PATHS.length} required files, tracked files: ${tracked.length}, no credentials, no copied legacy, core vocabulary clean (${coreFiles} files).`,
+  `OK — structure: ${REQUIRED_PATHS.length} required files, tracked files: ${tracked.length}, no credentials, no copied legacy, core vocabulary clean (${coreFiles} files), package graph: ${PACKAGE_EDGES.length} allowlisted edges, acyclic.`,
 );
 for (const note of notes) console.log(`note: ${note}`);

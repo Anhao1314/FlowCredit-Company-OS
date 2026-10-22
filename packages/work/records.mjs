@@ -4,7 +4,13 @@
 //
 // These are plain frozen records. The runtime command layer validates input
 // against BOUNDS before constructing them; the store maps them to storage rows.
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
+import { digestOf } from "../foundation/primitives.mjs";
+
+// digestOf lives in the foundation leaf so the workforce↔work dependency cycle
+// stays broken (workforce needs the digest, workforce must not need `work`).
+// Re-exported here for the record layer's existing consumers.
+export { digestOf };
 
 export const CHECKPOINT_ID_PREFIX = "ckp_";
 export const ARTIFACT_ID_PREFIX = "art_";
@@ -43,10 +49,6 @@ export function newCheckpointId() {
 
 export function newArtifactId() {
   return `${ARTIFACT_ID_PREFIX}${randomUUID()}`;
-}
-
-export function digestOf(text) {
-  return `sha256:${createHash("sha256").update(text, "utf8").digest("hex")}`;
 }
 
 export function newCheckpoint({
