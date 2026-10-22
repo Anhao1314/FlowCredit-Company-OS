@@ -12,7 +12,7 @@ FlowCredit 认识 Founder，帮助他建立自己的 AI 公司、招聘 AI 员�
 
 ## 1. Current status
 
-**Foundation + Persistent Work Kernel (schema v12) + Workforce Identity & Assignment v0B1 +
+**Foundation + Persistent Work Kernel (schema v13) + Workforce Identity & Assignment v0B1 +
 Review / Repair Collaboration v0B2 + Founder Attention & Acceptance v0B3 +
 Work Continuity v0B4 + Worker Harness v0 + CodexExecAdapter v1 +
 Generic Model Worker v0A + Web Research Actuator v0B + Product Research Employee v0C +
@@ -23,7 +23,7 @@ Workforce Experience v0A + Employee Lobby v0 + Founder Workspace v0C.**
 
 | 能力 | 状态 | 契约 / 证据 |
 | --- | --- | --- |
-| 持久 Work Kernel | ✅ schema v12：崩溃恢复、generation fencing、幂等交付、v1→v12 迁移链 | [persistent-work-kernel-v0](docs/contracts/persistent-work-kernel-v0.md) |
+| 持久 Work Kernel | ✅ schema v13：崩溃恢复、generation fencing、幂等交付、v1→v13 迁移链 + 迁移前自动快照 | [persistent-work-kernel-v0](docs/contracts/persistent-work-kernel-v0.md) |
 | 团队身份与派工 | ✅ Employee ≠ Model ≠ WorkerRun | [workforce-identity-assignment-v0](docs/contracts/workforce-identity-assignment-v0.md) |
 | Review / Repair 协作 | ✅ 协议完整；真实 Repair 证据缺口 `REAL_REPAIR_EVIDENCE_NOT_OBSERVED` | [review-repair-collaboration-v0](docs/contracts/review-repair-collaboration-v0.md) |
 | Founder Attention & ACCEPT | ✅ 唯一持久化人类权威动作；Decision UI 未实现 | [founder-attention-acceptance-v0](docs/contracts/founder-attention-acceptance-v0.md) |
@@ -79,7 +79,7 @@ Kernel             packages/runtime   WorkKernel · Continuation Driver · schem
 领域包             packages/work · workforce · harness · company · decision · planning
 产品层             packages/product（可写命令）  packages/experience（只读投影）
 基础设施           scripts（check·lib·demos·evidence·ops）  tooling（dev-only ESLint）
-                   tests（521 用例）  fixtures（种子数据）
+                   tests（526 用例）  fixtures（种子数据）
 ```
 
 依赖规则被 `scripts/check.mjs` §5 强制执行：`packages/` 与 `apps/runtime/` 只允许
@@ -145,8 +145,9 @@ node scripts/evidence/h1-1-codex-repair.mjs boundary 1|2|3
 ```
 
 CI（GitHub Actions `FlowCredit CI`）在 `pull_request` 与 push 到 `main` 时运行
-`node scripts/check.mjs` 与 `node --test`（Node **24.x + 22.x** 矩阵，权限仅
-`contents: read`，无密钥、无网络模型调用）。CI 只是回归保护，不是 provider 验证：
+`node scripts/check.mjs` 与 `node --test`（Node **24.x + 22.x** 矩阵），外加
+ESLint 与覆盖率门禁（`scripts/coverage-gate.mjs`，Node 24.x 单独 job）；权限仅
+`contents: read`，无密钥、无网络模型调用。CI 只是回归保护，不是 provider 验证：
 真实 Codex 证据仍需手动运行。
 
 ## 5. Repository map
@@ -159,8 +160,9 @@ docs/architecture/ 原则、对象模型、仓库重构记录
 docs/contracts/    20 份里程碑契约（能力权威清单）
 docs/milestones.md 按合并顺序的完整里程碑叙述（自 README 迁出）
 docs/migration/    旧仓库能力迁移清单与 provenance
-packages/          company · work · decision · planning · workforce · harness ·
-                   runtime（Kernel、schema v12、Continuation Driver、Relay Sense、
+packages/          foundation（跨域原语：digestOf——依赖图 DAG 的叶子）·
+                   company · work · decision · planning · workforce · harness ·
+                   runtime（Kernel、schema v13、Continuation Driver、Relay Sense、
                    secret provider）· product · experience
 apps/runtime/      Kernel 最小运行时进程（命令 seam + Founder Attention 与 Experience 端点）
 apps/shared/       apps 层共享纯函数（local-origin）
@@ -168,9 +170,9 @@ apps/workspace/    Founder Workspace 产品主页（只读投影壳，无写路�
 apps/employee/     AI 员工像素大厅与工牌（只读 + 启用/停用）
 apps/desktop/      Relay Code Electron 桌面壳（独立 package.json，devDeps 合法）
 fixtures/          种子数据（system workforce roster），不属于核心语言
-scripts/           check（质量门）· lib（进程 harness，测试共用）·
-                   demos（可复现演示）· evidence（H1/H1.1 与人工证据）·
-                   ops（UI 启动与种子写入）
+scripts/           check（结构/凭据/依赖方向质量门）· coverage-gate（覆盖率门禁）·
+                   lib（进程 harness，测试共用）· demos（可复现演示）·
+                   evidence（H1/H1.1 与人工证据）· ops（UI 启动与种子写入）
 tooling/           dev-only 工具链（ESLint 基线；根 manifest 保持零依赖，bootstrap 测试钉死）
 tests/             smoke · unit · integration（node --test）
 ```

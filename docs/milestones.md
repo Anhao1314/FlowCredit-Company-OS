@@ -190,3 +190,26 @@ Loop 也还没有被正式宣布 PASS。Kernel 是三者共同的 Runtime 地基
 Company Canvas 不是第四个 MVP，它是三个 MVP 的统一 Founder Workspace。Jev 不是
 第四个 MVP，它是可选的 Semantic Sensor 实现；新 Runtime 不得硬依赖 TypeSafe SDK
 才能运行。Dynamic Swarm（动态分配、并行 fan-out、自主组队）不是当前 MVP blocker。
+
+## 2026-10-22 — Hardening pass（评估 P0 批次）
+
+只读成熟度评估（五维独立读码）给出六项 P0；本批落地其中五项（P0-6 LLM 规划器 +
+原生 tool calling 按仓库文化契约先行，另立里程碑）：
+
+1. **迁移前自动快照**：既有 store 在迁移链运行前以 `VACUUM INTO` 生成
+   `kernel.sqlite.bak-v{fromVersion}` 一致性快照（同名已存在则不覆盖；快照失败
+   即中止迁移）。schema **v12 → v13** 同时新增 `activity_kind_sequence` 索引，
+   交付回执读取（resultSubmissionForRun / reviewResultSubmissionForRun）由全量
+   JS 过滤改为 `json_extract` 定向 SQL。
+2. **codex 子进程 env 白名单**（`CODEX_CHILD_ENV_ALLOWLIST`）：PATH/HOME/TERM/
+   LANG/LC_ALL/LC_CTYPE/SHELL/USER/LOGNAME + adapter 显式 `env` 选项 + scratch
+   TMPDIR。宿主环境不再整体透传，凭据默认不进 AI 进程；codex-exec-adapter-v1
+   契约与 KNOWN_LIMITATIONS 同步更新，桌面关闭集成测试的桩配置移入桩可执行文件。
+3. **包依赖方向守卫**（check.mjs §6）：跨包 import 必须命中方向白名单（15 条边），
+   白名单自身校验无环；新增 `packages/foundation/` 叶子包承载 `digestOf`，
+   断开 workforce→work 反向边（历史循环依赖就此不可复发）。
+4. **CI 质量门补全**：新增 lint 与 coverage job（Node 24.x）；
+   `scripts/coverage-gate.mjs` 强制覆盖率下限（默认行 86.5 / 分支 81.5 /
+   函数 82.5，`FLOWCREDIT_COVERAGE_MIN_*` 可覆盖）。
+5. **测试整理**：6 个文件中 8 处硬编码 schema 版本断言改为 `SCHEMA_VERSION`
+   引用；新增快照、env 防泄漏、定向回执回归测试。

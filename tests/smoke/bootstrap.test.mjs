@@ -58,7 +58,7 @@ test("README reports implementation status honestly", () => {
   const readme = read("README.md");
   assert.match(
     readme,
-    /Foundation \+ Persistent Work Kernel \(schema v12\) \+ Workforce Identity & Assignment v0B1/,
+    /Foundation \+ Persistent Work Kernel \(schema v13\) \+ Workforce Identity & Assignment v0B1/,
   );
   assert.match(readme, /Review \/ Repair Collaboration v0B2/);
   assert.match(readme, /Reviewer PASS ≠ Founder ACCEPT/);
