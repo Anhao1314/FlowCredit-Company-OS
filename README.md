@@ -8,7 +8,9 @@ FlowCredit 认识 Founder，帮助他建立自己的 AI 公司、招聘 AI 员�
 - **Audience:** 个人创业者 / Solo Founder / 一人公司（OPC），单机、单用户
 - **Long-term shape:** Founder 组建团队，FlowCredit 调度团队，Work 持续存在
 
-## Current status
+---
+
+## 1. Current status
 
 **Foundation + Persistent Work Kernel (schema v12) + Workforce Identity & Assignment v0B1 +
 Review / Repair Collaboration v0B2 + Founder Attention & Acceptance v0B3 +
@@ -17,189 +19,27 @@ Generic Model Worker v0A + Web Research Actuator v0B + Product Research Employee
 Founder Hiring Loop v0 + Relay Sense v0 (Laya / Jev) +
 Workforce Experience v0A + Employee Lobby v0 + Founder Workspace v0C.**
 
-以下里程碑段落按合并顺序保留为历史叙述；段中出现的 schema 版本号是**当时**的值，
-store 现为 **schema v12**，旧 store 沿 v1→v12 逐级迁移、保留全部历史。当前能力
-权威清单以本段开头与 [docs/contracts/](docs/contracts/) 为准。
+### Capability snapshot
 
-已实现的是一个不绑定任何特定模型 provider 的持久 Work Kernel：`Company` / `Work` /
-`Task` / `Artifact` / `Checkpoint` / `Activity` 在进程退出与重启后保持一致、可恢复，
-并带 generation 隔离（旧 execution 的迟到结果无法覆盖新现实）。它跑在 Node 内置的
-`node:sqlite` 上，零第三方依赖。
+| 能力 | 状态 | 契约 / 证据 |
+| --- | --- | --- |
+| 持久 Work Kernel | ✅ schema v12：崩溃恢复、generation fencing、幂等交付、v1→v12 迁移链 | [persistent-work-kernel-v0](docs/contracts/persistent-work-kernel-v0.md) |
+| 团队身份与派工 | ✅ Employee ≠ Model ≠ WorkerRun | [workforce-identity-assignment-v0](docs/contracts/workforce-identity-assignment-v0.md) |
+| Review / Repair 协作 | ✅ 协议完整；真实 Repair 证据缺口 `REAL_REPAIR_EVIDENCE_NOT_OBSERVED` | [review-repair-collaboration-v0](docs/contracts/review-repair-collaboration-v0.md) |
+| Founder Attention & ACCEPT | ✅ 唯一持久化人类权威动作；Decision UI 未实现 | [founder-attention-acceptance-v0](docs/contracts/founder-attention-acceptance-v0.md) |
+| 自动协调（Continuation Driver） | ✅ 实测 0 手动协调（closure gate PASS） | [work-continuity-v0](docs/contracts/work-continuity-v0.md) |
+| 执行层 | ✅ Codex exec 真实验证（H1/H1.1）+ DeepSeek 通用模型循环 + 确定性 test backend | [worker-harness-v0](docs/contracts/worker-harness-v0.md) · [codex-exec-adapter-v1](docs/contracts/codex-exec-adapter-v1.md) · [generic-model-worker-v0a](docs/contracts/generic-model-worker-v0a.md) |
+| Web 观测 | ✅ 只读 read（SSRF 加固）；search 有接口、无生产 SearchProvider | [web-research-actuator-v0b](docs/contracts/web-research-actuator-v0b.md) |
+| 产品员工 | ✅ Nova 选品研究（单场景、市场限 US） | [product-research-employee-v0c](docs/contracts/product-research-employee-v0c.md) |
+| Founder 招聘闭环 | 🔶 Founder 侧闭环已实现，未做 closure 审核 | [backend-founder-work-loop-v0a](docs/contracts/backend-founder-work-loop-v0a.md) |
+| 观测面 Relay Sense | ✅ Champion/Challenger 影子传感器，仅观测、永不作为决策输入 | — |
+| 产品界面 | ✅ Experience 只读投影 + Lobby；写路径全部是诚实占位 | [workforce-experience-v0](docs/contracts/workforce-experience-v0.md) · [employee-lobby-v0](docs/contracts/employee-lobby-v0.md) · [founder-workspace-v0](docs/contracts/founder-workspace-v0.md) |
+| 桌面壳 Relay Code | ✅ Electron 44 macOS 壳；未签名未公证 | [relay-code-desktop-v0](docs/contracts/relay-code-desktop-v0.md) |
+| Company Genesis（MVP 1） | ❌ 未实现 | — |
+| Founder Work 定义 / Decision UI / Canvas 持久化 | ❌ 未开始 | — |
+| General A2A / Dynamic Swarm / DAG planner | ❌ 明确不在当前范围 | — |
 
-v0B1 在此之上加入团队身份与派工：`Position`（岗位能力）/ `Employee`（长期存在的
-AI 员工）/ `Assignment`（谁负责这项 Task）/ `WorkerRun`（一次执行尝试，带自己的
-id 与状态）。员工身份与模型、provider、执行尝试完全解耦：换 provider 不会换人，
-崩溃不会让员工永远"忙碌"。（合并时为 schema v2；现为 schema v12。）
-
-v0B2 加入企业协作协议：一个员工交付 Artifact 后，另一个员工可以正式 **Review** 它
-（`PASS` / `REQUEST_REVISION`），Review 发现问题时 Runtime 会开出带完整 lineage 的
-**Repair Task**（新的 Task，不是重开旧的），修复产出的 Artifact 通过
-`supersedesArtifactId` 取代旧版本，并且必须再次接受 Review。Review 记录不可修改，
-旧 Artifact 永不改写，循环次数不设上限。Review 之后 Work 只会变成
-`READY_FOR_DECISION` —— **Reviewer PASS ≠ Founder ACCEPT**。（合并时为 schema v3。）
-
-v0B3 补上这条链路的最后一段：**Founder Attention + Founder ACCEPT**。Work 停下等待
-人类时，`WorkKernel.founderAttention({ companyId })` 会给出一个派生 projection ——
-哪些 Work 真的需要 Founder、可以做什么、以及为什么。它不是第二套 Todo：没有
-Inbox 表、没有 read/unread/done/dismissed，读它不写任何东西，每个 Work 最多一条。
-Founder 的 ACCEPT 是**唯一被持久化的人类权威动作**，写入一张 append-only、不可修改、
-每个 Work 最多一条的 `founder_decisions`，并绑定**确切的 Artifact、确切的 digest、
-确切的 DecisionBasis（该 Work 的 activity head）**。ACCEPT 与 Review 完全解耦：
-Review 不可能自动变成接受，接受也不会写入 Knowledge。Work 的 outcome 是派生的
-（`NO_CANDIDATE` / `READY` / `AMBIGUOUS` / `ACCEPTED`），collaboration status 仍是
-`READY_FOR_DECISION`：`ACCEPT` 是动作，`ACCEPTED` 是状态。（合并时为 schema v4。）
-
-v0B4 把"调度团队"这一段也交还给 Runtime：Continuation Driver 是一个**无状态执行器**
-（读真相 → 选一个合法动作 → 跑一条命令 → 重新读），没有时钟、没有队列、没有调度策略；
-每次迭代最多提交一次业务写入（`MAX_CONTINUATION_STEPS = 16` 是循环保险丝）。协调规则
-冻结在 Work Continuity v0B4 契约里：eligibility（组织能力事实）≠ dispatchability
-（此刻能否自动开工），BUSY 不等于能力缺口（`NO_DISPATCHABLE_EMPLOYEE`）；Reviewer
-独立性（reviewer ≠ 该 Artifact 的 producer）在 `assignTask` 与 `startWorkerRun` 两处
-fail-closed 强制；`WORK_ALREADY_ACTIVATED` 是良性收敛而不是失败。跨 Work 的唤醒只是
-"公司人力事实变了（run 结束 / enabled 变化 / 新员工）→ 重新读真相"的信号：不写别的
-Work 的 Activity、不推进它的 basis、没有持久队列、没有 event bus。新增 append-only 的
-`continuation_traces`（仅供观测，永不作为决策输入）。（合并时为 schema v6。）
-
-Backend Founder Work Loop v0A 增加独立的 `CreateFounderWork` 产品命令和不可变的
-Work 级本地执行绑定（仓库指纹 + 固定 commit，不存绝对路径）。
-默认 Runtime 仍不开启协调或 Worker backend。契约见
-[`docs/contracts/backend-founder-work-loop-v0a.md`](docs/contracts/backend-founder-work-loop-v0a.md)。
-
-H0/H0.1/H0.2 是**实验证据**：用真实 `codex exec` 子进程验证执行层假设——真实 Codex
-执行从实验上确认了 Harness 的隔离边界、中断与结构化结果假设，这些结论随后被固化成执行
-契约。committed 的 Worker Harness v0 是 **provider-neutral** 的生产执行架构；
-`CodexExecAdapter` 是它的第一个真实 backend，已在真实 CLI（`codex-cli
-0.154.0-alpha.6.2`）上完成 H1 验证。执行层的形态：一次 WorkerRun 的结束由
-Worker host 报告——失败走 `interruptWorkerRun`（`WORKER_TIMEOUT` / `WORKER_PROCESS_EXIT` /
-`WORKER_PROTOCOL_ERROR` / `WORKER_OUTPUT_REJECTED`，与崩溃恢复共用同一个中断 primitive），
-成功走 `submitWorkerResult`。
-成功交付是**原子**的：Artifact 记录、WorkerRun 收口、Task 状态与 **Runtime 自己推导的**
-Review 交接在同一事务提交，host 无法自行选择交接方式；重放
-`(workerRunId, generation, resultDigest)` 幂等，换 digest 则 `WORKER_RESULT_CONFLICT`。
-候选 outcome 只认 producer Task **当前 generation** 的 Artifact：被放弃 generation 的残留
-永远是历史而不是候选，所以"崩溃 + 自动重试"不会再制造假的 `OUTCOME_AMBIGUOUS`。完整
-Harness evidence 永不入库，只留 digest。
-
-Worker Harness v0 Slice 1.1 是**执行层**：`WorkerHost` 只执行 Runtime 已经开工的
-WorkerRun——派工、开工、Review/Repair 调度仍属于 v0B4。开工观察走与 v0B4 同形的
-post-commit seam（重复通知安全，错过可被 reconcile 修复，没有轮询/事件总线/持久队列）。
-每次尝试持久化一条不可变的 `WorkerExecutionBinding`（schema v6，1 WorkerRun : 1
-binding），并把「运行目录」按 `run + generation` 隔离：新 generation 一定是新 workspace，
-旧的孤儿目录永不复用——正确性来自 generation fencing + isolation，不依赖杀掉孤儿进程。
-WorkerResult（Worker 自述）与 HarnessEvidence（Host 观测）是两个对象，都不等于批准；
-`executionPolicy.requested ≠ effective`：请求的限制不等于已证明的隔离。
-
-尝试按角色持有各自的 `ResultContract`（执行/Repair = `ARTIFACT_DELIVERY`，Review =
-`REVIEW_JUDGMENT`，由 WorkPacket 决定，adapter 不能改）。两条交付 seam 都是原子的：
-`submitWorkerResult` 写 Artifact，`submitWorkerReviewResult` 写 **Reviewer 的判断**——
-Runtime 从 WorkerRun 推导 Review Task → ReviewRequest → 目标 Artifact + digest 的全部
-lineage，复用同一个 `submitReview` 原语，绝不伪造 verdict，也不会在事务里顺手创建
-Repair。两条 seam 都以 `(workerRunId, generation, resultDigest)` 幂等，冲突返回 409；
-Provider 专属解析属于 adapter，schema 验证属于 Host：没有可用的结果协议时中断尝试
-（`WORKER_PROTOCOL_ERROR`），协议合法但被独立 Harness 证据或执行策略拒绝时中断尝试
-（`WORKER_OUTPUT_REJECTED`，具体原因如 verification / HEAD / 受保护路径留在 evidence
-侧），两者都永远不会变成 Runtime truth。自动重试是**有界**的：
-`MAX_AUTONOMOUS_ATTEMPTS_PER_TASK = 3`（1 次初始 + 2 次自动重试），计数完全从持久的
-WorkerRun 历史推导，不存计数器、不加 Task 状态；预算用尽后 Driver 停止
-（`AUTO_RETRY_EXHAUSTED`），Work 进入 Founder Attention（`RESUME_EXECUTION` /
-`ASSIGN_EMPLOYEE` / `ENABLE_EMPLOYEE` / `ABANDON_TASK`）。
-
-`CodexExecAdapter` 把同一个 WorkerAdapter 契约接到真实的本地 `codex exec` 上：一次
-WorkerRun = 一个全新的子进程（`--ephemeral`，不 resume）；base repository + 精确
-baseRevision 通过 `git worktree --detach` 变成 run-scoped workspace，源 checkout 永不
-被触碰、worker 永不 commit / push；`TMPDIR`/`TMP`/`TEMP` 指向 run scratch，并诚实记录
-sandbox ≠ OS 级隔离。prompt 只由 WorkPacket + run envelope 编译（角色、目标、成功标准、
-独立验证命令、受保护路径、禁止的外部效果、结果 JSON 形状；不要求 chain-of-thought）。
-结果解析先 strict JSON、再在文本里提取**唯一**的顶层 JSON 对象（fenced 或裸对象同样
-对待；两个可解析对象直接拒绝），绝不推断缺失字段、绝不用第二次 LLM 修 malformed
-输出；模型自述与 Harness 独立观测（进程 / git diff vs baseRevision / 受保护路径 /
-独立运行验证命令）是两个对象。H1 已在真实 CLI 上跑通：真实执行 → 独立验证
-通过 → 真实 Codex reviewer PASS → `READY_FOR_DECISION` → Founder ACCEPT（Work 提出后
-0 条手动协调命令）；真实超时 → `WORKER_TIMEOUT` → 自动重派到新 generation 的新
-workspace（旧 workspace 被投毒也永不复用）；结果协议非法时 3 次尝试全部
-`WORKER_PROTOCOL_ERROR`、不产生 Artifact / Review、交给 Founder。H1.1 收口了失败原因
-词汇（协议非法 vs 交付被拒）并用三个真实任务场景（输入规范化、ISO-8601 时长、区间代数）
-各跑通一条“真实执行 → 真实评审”链路：Reviewer 每次都是自主判定且诚实地 PASS，
-**没有观测到真实的 `REQUEST_REVISION`**，所以 Repair 证据缺口记为
-`REAL_REPAIR_EVIDENCE_NOT_OBSERVED`（协议本身由确定性测试覆盖）。重启、评审与修复
-语义完全复用 v0A–v0B4，Runtime 不受 Codex 影响。
-
-Workforce Experience v0A 是**产品读模型**而不是新 Runtime：`packages/experience/`
-从 Kernel 公开 read seam 派生 Founder Workspace 与 Employee Lobby 需要的内容（Company
-状态、Founder Attention、主 Work lineage、AI Workforce、Recent Deliveries、Company
-Pulse）。availability 冻结为派生的 `AVAILABLE` / `WORKING` / `DISABLED`，当前角色冻结
-为派生的 `EXECUTION` / `REVIEW` / `REPAIR` —— 两者都不存储、不缓存、不猜；执行 backend
-（`backendType` / `backendVersion`）只是执行细节，不是员工身份。四个 GET-only 端点暴露
-这些投影：`/experience/companies/:id/workspace`、`/experience/companies/:id/workforce`、
-`/experience/employees/:id`、`/experience/works/:id/lineage`。读投影不写任何东西、没有
-第二套 lifecycle、没有缓存、没有 Todo 表：读时从 Runtime truth 重新派生，重启后同一
-truth 投影完全一致，未知 id 显式 404。Founder Attention 仍然只是 Runtime projection；
-Reviewer PASS 不会经由此层变成 ACCEPTED。Pixel Lobby（PR #1）已由 **Employee Lobby v0 集成**
-接入 Experience API 并合入 main（见下方与
-[Employee Lobby v0 契约](docs/contracts/employee-lobby-v0.md)）：大厅只是投影的只读客户端，
-唯一的 Founder 写操作是启用/停用员工。**Founder Workspace v0C** 把同一层投影接成产品主页
-`apps/workspace`（`/workspace`）：主 Work lineage、Needs You、AI Workforce、Recent
-Deliveries 与 Company Pulse 全部来自 `GET /experience/companies/:id/workspace` 的**单一投影**，
-每 ~2 秒整体替换；工作台自身**没有任何写路径**（`+ 新建 Work` 是诚实的禁用占位，ACCEPT 的
-执行属于 Founder Decision UI 里程碑）。
-
-在此之上，执行层已接入**通用模型员工循环**：`GenericModelWorkerAdapter`（Host 授权的
-ToolSession + 有界模型循环）+ `DeepSeekModelBackend`（OpenAI 兼容 Chat Completions）
-+ `WebResearchActuator`（`research.web.search` / `research.web.read`，SSRF 加固的只读
-公共 web 观测）。产品层已有 **Nova 选品研究员工**（`packages/product/product-research.mjs`）
-与 **Founder Hiring Loop v0**（草稿 → 试用 Work → 真实模型执行 → 评审 → Founder 确认，
-`packages/product/founder-hiring.mjs` / `employee-hiring.mjs` + `/workspace` 招聘页）。
-观测面 **Relay Sense v0** 已实现（`packages/runtime/relay-sense.mjs` +
-`jev-sense-backend.mjs` / `laya-shadow-sensor.mjs`：Champion/Challenger 双传感器、
-仅观测、永不作为决策输入）。General A2A 仍未开始。
-
-- 契约：[Persistent Work Kernel v0A](docs/contracts/persistent-work-kernel-v0.md) ·
-  [Workforce Identity & Assignment v0B1](docs/contracts/workforce-identity-assignment-v0.md) ·
-  [Review / Repair Collaboration v0B2](docs/contracts/review-repair-collaboration-v0.md) ·
-  [Founder Attention & Acceptance v0B3](docs/contracts/founder-attention-acceptance-v0.md) ·
-  [Work Continuity v0B4](docs/contracts/work-continuity-v0.md) ·
-  [Worker Execution Seam v0 (H0.1 + H0.2)](docs/contracts/worker-execution-seam-v0.md) ·
-  [Worker Harness v0 (Slice 1.1)](docs/contracts/worker-harness-v0.md) ·
-  [CodexExecAdapter v1](docs/contracts/codex-exec-adapter-v1.md) ·
-  [Workforce Experience v0](docs/contracts/workforce-experience-v0.md)
-  · [Employee Lobby v0](docs/contracts/employee-lobby-v0.md)
-  · [Founder Workspace v0](docs/contracts/founder-workspace-v0.md)
-  · [Relay Code Desktop v0](docs/contracts/relay-code-desktop-v0.md)
-  · [Desktop Worker Backend Discovery v0](docs/contracts/desktop-worker-backend-discovery-v0.md)
-  · [Founder Workspace Product Integration v1](docs/contracts/founder-workspace-product-integration-v1.md)
-  · [Generic Model Worker v0A](docs/contracts/generic-model-worker-v0a.md)
-  · [Web Research Actuator v0B](docs/contracts/web-research-actuator-v0b.md)
-  · [Product Research Employee v0C](docs/contracts/product-research-employee-v0c.md)
-- 演示：`node scripts/demos/demo-work-kernel.mjs` · `node scripts/demos/demo-workforce-v0b1.mjs` ·
-  `node scripts/demos/demo-review-repair-v0b2.mjs` · `node scripts/demos/demo-founder-acceptance-v0b3.mjs` ·
-  `node scripts/demos/demo-work-continuity-v0b4.mjs` · `node scripts/demos/demo-worker-harness-v0.mjs`
-- UI：Founder Workspace v0C 是产品主页（单一投影、LIVE 只读、无写路径、未完成区域为诚实占位）；
-  可禁用的 AI 员工像素大厅与工牌 UI 由同一层 Runtime 投影驱动（LIVE 只读、状态 fail closed、
-  `?demo=1` 为显式模拟）。Company Canvas 持久化、公司级 Activity、Founder Work 定义与
-  Founder Decision UI、Company Genesis、General A2A 均未开始。协调由确定性的
-  Continuation Driver 完成（不是 scheduler / event bus / 持久队列）；执行由 WorkerHost +
-  `codex-exec` backend / DeepSeek 通用模型员工循环完成（另有确定性的 test backend 用于测试）。
-
-Three MVPs: **still not complete.** Company Genesis 还没有实现；AI Hiring Loop 已实现
-Founder 侧闭环（草稿 → 试用 → 评审 → 确认，`docs/contracts/` 与
-`packages/product/founder-hiring.mjs`）但尚未做正式 closure 审核；AI Workforce Loop
-也还没有被正式宣布 PASS。Kernel 是三者共同的 Runtime 地基。
-
-v0B3 记录了一个 **AI Workforce MVP closure gate**：
-
-> Founder 建好 Work 之后，能否不亲自做日常协调，一直等到 FlowCredit 合理地需要他？
-
-**v0B4 关闭了这个 gate**：`FLOWCREDIT_COORDINATION=driver` 时，普通 Task 的指派与启动、
-Review 的指派、Repair 的协调都由 Runtime 的 Continuation Driver 逐步完成；Scenario 1 /
-Scenario 2 实测 Founder Extra Touch 与 Manual Coordination 均为 **0**。这个结果的名字是
-`Deterministic Workforce Coordination Closure = PASS`，**不是**"完整产品自主"。真实执行
-此后由 `CodexExecAdapter` 接通（H1：真实执行 → 真实评审 → Founder ACCEPT；真实超时
-自动重派到新 workspace；结果协议失败不产生 Artifact、交给 Founder），但 MVP 2 是否
-PASS 仍留给一次显式的 closure 审核，不自动成立。v0B4 不包含 scheduler、capability
-ranking、DAG planner、Dynamic Swarm、Hiring 或 Knowledge Admission；历史能力仍留在旧的
-R&D 仓库（见下），迁移遵循 capability by capability，不整目录复制。
-
-## The three core MVPs
+### The three core MVPs
 
 | # | MVP | 回答的问题 | 核心产物 |
 | --- | --- | --- | --- |
@@ -207,174 +47,168 @@ R&D 仓库（见下），迁移遵循 capability by capability，不整目录复
 | 2 | **AI Workforce Loop** | 这家公司怎么工作？ | `Work` `Task` `WorkerRun` `Artifact` `Review` `Repair` `Decision` |
 | 3 | **AI Hiring Loop** | 公司缺能力时如何增加员工？ | `Position` `Employee`（经 Trial Task 与 Founder 确认） |
 
-Company Canvas 不是第四个 MVP，它是三个 MVP 的统一 Founder Workspace。
-Jev 不是第四个 MVP，它是可选的 Semantic Sensor 实现；新 Runtime 不得硬依赖 TypeSafe SDK 才能运行。
-Dynamic Swarm（动态分配、并行 fan-out、自主组队）不是当前 MVP blocker。
+Three MVPs: **still not complete.** Company Genesis 还没有实现；AI Hiring Loop 已实现
+Founder 侧闭环但尚未做正式 closure 审核；AI Workforce Loop 也还没有被正式宣布 PASS
+（协调 closure gate 已 PASS，见 [里程碑叙述](docs/milestones.md)）。Kernel 是三者共同的
+Runtime 地基。Company Canvas 不是第四个 MVP，它是三个 MVP 的统一 Founder Workspace；
+Jev 是可选的 Semantic Sensor；Dynamic Swarm 不是当前 blocker。
 
-细节见 [MVP 定义](docs/product/mvp-v0.md)。
+按合并顺序的完整里程碑叙述（schema 演进、H0/H1 实验证据、每层的诚实边界）在
+[docs/milestones.md](docs/milestones.md)。
 
-## Frozen principles
+## 2. Frozen principles
 
-Founder = Authority · Work = Continuity · Runtime = Control · Semantic Sensors = Sense · AI Employee = Think + Act · Knowledge = Memory
+**Founder = Authority · Work = Continuity · Runtime = Control · Semantic Sensors = Sense · AI Employee = Think + Act · Knowledge = Memory**
 
 四条不可协商的判断：
 
 - Agent COMPLETE ≠ Accepted
-- Reviewer PASS ≠ Human Approval
+- Reviewer PASS ≠ Human Approval（Reviewer PASS ≠ Founder ACCEPT）
 - Founder ACCEPT ≠ Knowledge Admission
 - Prompt ≠ Permission，Capability ≠ Permission
 
 完整清单见 [架构原则](docs/architecture/principles.md) 与 [对象模型](docs/architecture/object-model.md)。
 
-## Run and test
+## 3. Architecture（一屏）
 
-### AI 员工模块（增量接入）
+```
+Founder 触点        apps/workspace（主页）  apps/employee（大厅）  apps/desktop（Electron 壳）
+                        │ HTTP：GET 只读投影 + POST 命令 seam（loopback only）
+运行时进程          apps/runtime/server.mjs + apps/shared
+Kernel             packages/runtime   WorkKernel · Continuation Driver · schema v12 · Relay Sense
+领域包             packages/work · workforce · harness · company · decision · planning
+产品层             packages/product（可写命令）  packages/experience（只读投影）
+基础设施           scripts（check·lib·demos·evidence·ops）  tooling（dev-only ESLint）
+                   tests（521 用例）  fixtures（种子数据）
+```
 
-`npm run start:employees` 启动同一个 Runtime，默认访问 `http://127.0.0.1:4318/employees`。
-沿用 `FLOWCREDIT_RUNTIME_DIR`、`FLOWCREDIT_COORDINATION`、`FLOWCREDIT_PORT`；不会自动创建公司、员工或任务。
-默认页面为像素大厅，右上“角色”打开管理层，点击员工打开居中工牌。
+依赖规则被 `scripts/check.mjs` §5 强制执行：`packages/` 与 `apps/runtime/` 只允许
+`node:` 内建与相对导入（零第三方运行时依赖），反向依赖被测试钉死。仓库结构、重构
+记录与 kernel/store 拆分蓝图见
+[docs/architecture/repository-restructure-2026-10.md](docs/architecture/repository-restructure-2026-10.md)。
 
-- LIVE 模式（默认）：大厅是 Workforce Experience v0A 投影的只读客户端 —— 每 2 秒轮询
-  `/experience/companies/:id/workforce`，工牌读 `/experience/employees/:id`，工作线读
-  `/experience/works/:id/lineage`。它不持有 kernel、不读 SQLite、不调度：分配、启动、评审、返工
-  都不在大厅里；唯一的 Founder 写操作是工牌里的启用/停用（`POST /commands` → `setEmployeeEnabled`）。
-  读失败时保留最后已知投影、停止动画与写操作，并明确提示 Runtime 暂不可用，绝不回退成演示数据。
-- `/employees?demo=1` 是明确标记的浏览器内模拟模式；不写 Runtime，也不调用模型。
-- 状态词表只有派生的 `AVAILABLE` / `WORKING` / `DISABLED` 与角色 `EXECUTION` / `REVIEW` / `REPAIR`；
-  未知状态 fail closed。活动只按产品语言展示（未知 kind 显示中性短语，不显示原始标识）。
-- 头像只作本页本地裁剪预览；暂停/恢复、删除归档、模型、工具与 Token 统计均未接入并禁用。
-- `FLOWCREDIT_EMPLOYEE_UI=0` 禁用大厅静态页面；原有 Kernel 路由不受影响。
-- `npm run test:employees` 运行模块单元与 HTTP 集成测试。行为契约见
-  [Employee Lobby v0](docs/contracts/employee-lobby-v0.md)；PR #1 阶段的报告保留在 `reports/`（历史材料，以契约为准）。
+## 4. Quick start
 
-员工模块仍是本地单用户开发界面，未增加生产登录系统；Runtime 继续只绑定 loopback。
+要求 Node **24.19.0**（`.nvmrc`，CI 另跑 22.x 兼容守卫）。
 
-### Founder Workspace（产品主页）
-
-`npm run start:workspace` 启动同一个 Runtime，默认访问 `http://127.0.0.1:4320/workspace`
-（根路径 `/` 会 302 到 `/workspace`）。沿用 `FLOWCREDIT_RUNTIME_DIR`、
-`FLOWCREDIT_COORDINATION`、`FLOWCREDIT_PORT`；不会自动创建公司、员工或任务。
-
-- LIVE 只读：整页内容来自 `GET /experience/companies/:id/workspace` 这一份投影（每 ~2 秒整体
-  替换），员工详情与工作线分别读 `/experience/employees/:id`、`/experience/works/:id/lineage`；
-  公司选择只用 `/companies` 发现身份，不从中派生运行状态。
-- 没有任何写路径：不 assign、不 start、不 review、不 accept；`+ 新建 Work` 是禁用占位
-  （Founder Work 定义里程碑接入）；Needs You 面板只读展示 Runtime 当前提供的 Founder 动作，
-  ACCEPT 的执行需要 Experience 投影先携带决策绑定（Founder Decision UI 里程碑）。
-- 失败语义：读不到 Runtime 时保留最后已知投影并明确标注“尚未刷新”，不回退演示数据；未完成
-  区域（Work 列表 / Hiring / Artifacts / Knowledge / Settings）是诚实占位，不虚构数据。
-- `FLOWCREDIT_WORKSPACE_UI=0` 禁用产品主页静态页面；原有 Kernel 路由与 `/employees` 不受影响。
-- `npm run test:workspace` 运行工作台单元与 HTTP 集成测试。行为契约见
-  [Founder Workspace v0](docs/contracts/founder-workspace-v0.md)。
-
-### Relay Code Desktop（macOS Shell）
-
-`apps/desktop` 是 Relay Code 的 Electron 外部产品壳：Desktop Shell 只拥有自己的窗口、单实例与
-Runtime 子进程生命周期，不拥有 Company truth。固定 `electron@44.4.3`，其内置 Node `24.21.0`
-满足仓库 Node `>=24.19.0 <25`，并已在真实 Electron main process 中验证 `node:sqlite`。
-
-- `npm run start:desktop` 启动开发态窗口，自动加载动态 loopback 端口上的 `/workspace`；同源
-  `/employees` 导航保持可用。
-- `npm run package:desktop` 生成 `apps/desktop/dist/Relay Code-darwin-<arch>/Relay Code.app`；Runtime
-  源码和 `RelayCode.icns` 都进入 app bundle，外部产品名是 Relay Code，内部 Runtime 仍叫 FlowCredit。
-- Runtime 持久状态写入 `app.getPath("userData")/runtime`，退出时由 Desktop Shell 发送 SIGTERM 并等待
-  Runtime 收口；Bundle ID 为 `com.flowcredit.relaycode`。
-- 启动就绪 = Runtime ready line + `/health` 探针；开发态状态隔离在 `userData/runtime-dev`。
-- 该 build 未签名、未公证，仅用于本地开发验证；Finder 启动下的真实 Codex 发现尚未验证。
-  契约见 [Relay Code Desktop v0](docs/contracts/relay-code-desktop-v0.md)。
-
-要求 Node **24.19.0**（`.nvmrc`）。
+### 验证与质量门
 
 ```sh
-npm run check                       # 结构 / 密钥 / 生成物 / 核心语言与依赖检查
-npm test                            # node --test（单元 + 真实进程重启集成测试）
-node scripts/demos/demo-work-kernel.mjs   # 持久化与恢复演示（真实进程，SIGKILL 后恢复）
-node scripts/demos/demo-workforce-v0b1.mjs # 派工演示：员工身份跨崩溃存活，Artifact 指明 producer
-node scripts/demos/demo-review-repair-v0b2.mjs # 协作演示：Review → Repair → 再次 Review → PASS
-node scripts/demos/demo-founder-acceptance-v0b3.mjs # 接受演示：Founder Attention → ACCEPT → ACCEPTED（含硬重启）
-node scripts/demos/demo-work-continuity-v0b4.mjs # 协调演示：Driver 自动派工/开工/Review/Repair（0 手动协调 + 跨 Work 唤醒）
-node scripts/demos/demo-worker-harness-v0.mjs # 执行演示：WorkerHost + 确定性 test backend（执行→评审→ACCEPT、REVISION→Repair→PASS、超时重派与 workspace 隔离、重试预算用尽后交给 Founder）
-node scripts/evidence/h1-codex-exec.mjs smoke    # H1：真实 codex exec（需已安装并登录 Codex CLI；只写 /tmp/flowcredit-h1）
-node scripts/evidence/h1-codex-exec.mjs A        # H1：真实执行 → 真实评审 → READY_FOR_DECISION → Founder ACCEPT
-node scripts/evidence/h1-codex-exec.mjs B        # H1：真实超时 → 自动重派到新 generation 的新 workspace
-node scripts/evidence/h1-codex-exec.mjs C        # H1：结果协议失败（受控子进程）→ WORKER_PROTOCOL_ERROR
-node scripts/evidence/h1-1-codex-repair.mjs 1|2|3 # H1.1：真实执行 → 真实评审（三个场景，Reviewer 自主判定；只写 /tmp/flowcredit-h1-1）
-node scripts/evidence/h1-1-codex-repair.mjs boundary 1|2|3 # H1.1：重挂已完成的 store（coordination=off，不调用模型）→ Founder 边界 + 显式 ACCEPT
-node apps/runtime/server.mjs        # 以长期进程方式启动 Kernel
+npm run check          # 结构 / 密钥 / 生成物 / 核心语言与依赖检查
+npm test               # node --test（单元 + 真实进程重启集成测试）
+npm run test:coverage  # 覆盖率（基线：行 87.1% / 分支 82.4% / 函数 83.3%）
+npm run lint           # ESLint（dev-only，tooling/ 子包；0 error，32 条已登记 warning）
 ```
 
-服务进程读取 `FLOWCREDIT_RUNTIME_DIR`（store 目录）与 `FLOWCREDIT_PORT`
-（默认 `0` = 临时端口，只监听 `127.0.0.1`），以及 `FLOWCREDIT_COORDINATION`
-（默认 `off`；设为 `driver` 时启动 Continuation Driver：启动后 drive 一次，
-并在每个命令提交后唤醒）与 `FLOWCREDIT_WORKER_BACKEND`（默认 `off`；`test-worker`
-是确定性测试 backend；`codex-exec` 是真实本地 Codex CLI，需 `FLOWCREDIT_CODEX_REPO`
-等配置，见 [CodexExecAdapter v1](docs/contracts/codex-exec-adapter-v1.md)）。
-零运行时依赖：adapter 通过子进程调用操作者本机已安装的 Codex CLI，不引入 SDK。
+### 演示（每个都是可复现的最小闭环）
 
-CI：GitHub Actions 的 `FlowCredit CI`（`.github/workflows/ci.yml`）在 `pull_request` 与 push 到
-`main` 时运行 `node scripts/check.mjs` 与 `node --test`，覆盖 Node **24.x**（支持目标，
-与 `.nvmrc`/engines 对齐）与 **22.x**（兼容性守卫）双版本矩阵（权限仅
+```sh
+node scripts/demos/demo-work-kernel.mjs              # 持久化与恢复（真实进程，SIGKILL 后恢复）
+node scripts/demos/demo-workforce-v0b1.mjs           # 派工：员工身份跨崩溃存活，Artifact 指明 producer
+node scripts/demos/demo-review-repair-v0b2.mjs       # Review → Repair → 再次 Review → PASS
+node scripts/demos/demo-founder-acceptance-v0b3.mjs  # Attention → ACCEPT → ACCEPTED（含硬重启）
+node scripts/demos/demo-work-continuity-v0b4.mjs     # Driver 自动派工/开工/Review/Repair（0 手动协调）
+node scripts/demos/demo-worker-harness-v0.mjs        # 执行→评审→ACCEPT、REVISION→Repair、超时重派、重试预算
+```
+
+### 运行时与界面
+
+```sh
+node apps/runtime/server.mjs   # Kernel 长期进程（默认临时端口，仅监听 127.0.0.1）
+npm run start:workspace        # Founder Workspace：http://127.0.0.1:4320/workspace
+npm run start:employees        # 像素大厅：http://127.0.0.1:4318/employees
+npm run start:desktop          # Relay Code（macOS Electron 壳，开发态）
+npm run package:desktop        # 打包 Relay Code.app（未签名未公证）
+```
+
+| 环境变量 | 默认 | 说明 |
+| --- | --- | --- |
+| `FLOWCREDIT_RUNTIME_DIR` | — | store 目录 |
+| `FLOWCREDIT_PORT` | `0`（临时端口） | 仅监听 127.0.0.1 |
+| `FLOWCREDIT_COORDINATION` | `off` | 设为 `driver` 启动 Continuation Driver（启动 drive 一次 + 每次命令提交后唤醒） |
+| `FLOWCREDIT_WORKER_BACKEND` | `off` | `test-worker`（确定性）/ `codex-exec`（真实本地 Codex CLI，需 `FLOWCREDIT_CODEX_REPO` 等，见契约） |
+
+界面均为 LIVE 只读投影客户端：读失败时保留最后已知投影并明确标注，绝不回退演示数据；
+`/employees?demo=1` 是显式标记的浏览器内模拟。唯一的 Founder 写操作是启用/停用员工；
+ACCEPT 执行、新建 Work 均为诚实占位。行为细节以
+[Employee Lobby v0](docs/contracts/employee-lobby-v0.md) 与
+[Founder Workspace v0](docs/contracts/founder-workspace-v0.md) 契约为准。
+
+### H1 / H1.1 真实执行证据
+
+需本机已安装并登录 Codex CLI；只写 `/tmp/flowcredit-h1*`，不触仓库。
+
+```sh
+node scripts/evidence/h1-codex-exec.mjs smoke|A|B|C   # 冒烟 / 执行→评审→ACCEPT / 超时重派 / 协议失败
+node scripts/evidence/h1-1-codex-repair.mjs 1|2|3     # 三个真实"执行→评审"场景
+node scripts/evidence/h1-1-codex-repair.mjs boundary 1|2|3
+```
+
+CI（GitHub Actions `FlowCredit CI`）在 `pull_request` 与 push 到 `main` 时运行
+`node scripts/check.mjs` 与 `node --test`（Node **24.x + 22.x** 矩阵，权限仅
 `contents: read`，无密钥、无网络模型调用）。CI 只是回归保护，不是 provider 验证：
-真实 Codex 证据（H1 / H1.1）仍需手动运行，见上面的命令。另有 `npm run test:coverage`
-（Node 内置覆盖率）与 `npm run lint`（dev-only ESLint，不进入运行时依赖）。
+真实 Codex 证据仍需手动运行。
 
-## Relationship to the old worklab repository
-
-旧的 `FlowCredit-worklab` 系仓库（含其 worktree）**不再是产品主线**。它们的角色是：
-
-**R&D / Provenance / Historical Evidence Source** —— 只读。
-
-未来能力迁移遵循：**capability by capability, contract by contract, test by test**；每一项都要在 [迁移清单](docs/migration/from-flowcredit-worklab-v1.md) 中留下来源、提交与验证测试，禁止整目录复制（`cp -R`）。
-
-## Repository map
+## 5. Repository map
 
 ```
-README.md         产品入口与当前状态
-AGENTS.md         工程章程（AI/人类协作者都适用）
-docs/product/     MVP 定义
-docs/architecture/原则与对象模型
-docs/contracts/   Persistent Work Kernel v0A 契约
-                   / Workforce v0B1 契约 / Review & Repair v0B2 契约
-                   / Founder Attention & Acceptance v0B3 契约
-                   / Work Continuity v0B4 契约（Continuation Driver）
-                   / Worker Execution Seam v0 契约（中断命令、原子结果投递与 H0 实验结论）
-                   / Worker Harness v0 Slice 1.1 契约（WorkerHost、执行绑定、workspace 隔离、
-                     Reviewer 交付 seam、角色化 ResultContract 与有界自动重试）
-                   / CodexExecAdapter v1 契约（真实 codex exec 子进程、worktree workspace、
-                     prompt 编译、结果解析与独立 Harness 证据）
-                   / Workforce Experience v0 契约（Runtime-backed read projections：Founder
-                     Workspace / Employee Lobby 的派生只读产品模型与 GET 端点）
-                   / Founder Workspace v0 契约（Experience-backed 产品主页：单一投影、无写
-                     路径、诚实占位与已记录缺口）
-docs/migration/   旧仓库能力迁移清单与 provenance
-packages/         company（公司根对象）/ work（Work、Task、生命周期、协作、outcome 与
-                  Continuation Policy 投影；validation.mjs 为共享有界校验原语）/
-                  decision（Founder Decision 记录）/
-                  planning（确定性 NextActionProposer）/ workforce（Position、Employee、
-                  Assignment、WorkerRun、Work Packet、dispatchability）/
-                  harness（WorkerAdapter 契约、WorkerHost、角色化 ResultContract、
-                  执行绑定与 workspace 布局、确定性 test backend、真实
-                  CodexExecAdapter、GenericModelWorkerAdapter + DeepSeekModelBackend
-                  与 WebResearchActuator 工具面、prompt/结果解析）/
-                  runtime（命令、存储、schema v12 迁移、Continuation Driver、
-                  Relay Sense v0（jev / laya 传感器后端）与 secret provider）/
-                  product（Founder Work 绑定、Founder Hiring、Employee Hiring、
-                  Nova 选品研究）/
-                  experience（Workforce Experience v0：从 Runtime truth 派生的只读产品投影）
-apps/runtime/     Kernel 的最小运行时进程（health/status + 命令 seam + Founder Attention 与
-                  Workforce Experience 只读投影端点）
-apps/shared/      apps 层共享纯函数（local-origin：浏览器请求来源判定）
-apps/workspace/   产品主页静态壳与客户端（Experience 投影的只读呈现，无 kernel、无写路径）
-apps/employee/    AI 员工像素大厅与工牌静态壳（同一 Experience 投影的只读客户端；唯一 Founder
-                  写操作是启用/停用员工）
-fixtures/         种子数据（system workforce roster），不属于核心语言
-scripts/          check（结构/密钥/依赖门）与 lib/（进程 harness 与 H1 fixture，测试与
-                  脚本共用）。其余按职责分组：demos/（可复现演示，README 命令均指向此）、
-                  evidence/（H1/H1.1 真实 Codex 证据、真实网页冒烟、里程碑人工证据与
-                  Desktop 后端发现冒烟）、ops/（UI 启动脚本与 fixtures 种子写入）。
-tooling/          dev-only 工具链子包（ESLint 基线；`npm run lint` 经由此处）。
-                  根 package.json 保持零依赖纪律（bootstrap 测试钉死）。
-tests/            smoke / 单元 / 集成测试（node --test）
+README.md          产品入口与当前状态
+AGENTS.md          工程章程（AI/人类协作者都适用）
+docs/product/      MVP 定义
+docs/architecture/ 原则、对象模型、仓库重构记录
+docs/contracts/    20 份里程碑契约（能力权威清单）
+docs/milestones.md 按合并顺序的完整里程碑叙述（自 README 迁出）
+docs/migration/    旧仓库能力迁移清单与 provenance
+packages/          company · work · decision · planning · workforce · harness ·
+                   runtime（Kernel、schema v12、Continuation Driver、Relay Sense、
+                   secret provider）· product · experience
+apps/runtime/      Kernel 最小运行时进程（命令 seam + Founder Attention 与 Experience 端点）
+apps/shared/       apps 层共享纯函数（local-origin）
+apps/workspace/    Founder Workspace 产品主页（只读投影壳，无写路径）
+apps/employee/     AI 员工像素大厅与工牌（只读 + 启用/停用）
+apps/desktop/      Relay Code Electron 桌面壳（独立 package.json，devDeps 合法）
+fixtures/          种子数据（system workforce roster），不属于核心语言
+scripts/           check（质量门）· lib（进程 harness，测试共用）·
+                   demos（可复现演示）· evidence（H1/H1.1 与人工证据）·
+                   ops（UI 启动与种子写入）
+tooling/           dev-only 工具链（ESLint 基线；根 manifest 保持零依赖，bootstrap 测试钉死）
+tests/             smoke · unit · integration（node --test）
 ```
 
 只有存在真实内容时才新增目录；不做占位式空结构。
+
+## 6. Documentation index
+
+- **产品**：[MVP 定义](docs/product/mvp-v0.md)（三大 MVP 与边界）
+- **架构**：[原则](docs/architecture/principles.md) · [对象模型](docs/architecture/object-model.md) · [仓库重构记录](docs/architecture/repository-restructure-2026-10.md)
+- **契约**（能力权威清单，先契约后实现）：Kernel [v0A](docs/contracts/persistent-work-kernel-v0.md) · Workforce [v0B1](docs/contracts/workforce-identity-assignment-v0.md) · Review/Repair [v0B2](docs/contracts/review-repair-collaboration-v0.md) · Founder Acceptance [v0B3](docs/contracts/founder-attention-acceptance-v0.md) · Continuity [v0B4](docs/contracts/work-continuity-v0.md) · Founder Work [v0A](docs/contracts/backend-founder-work-loop-v0a.md) · 执行 [seam](docs/contracts/worker-execution-seam-v0.md) / [harness](docs/contracts/worker-harness-v0.md) / [codex](docs/contracts/codex-exec-adapter-v1.md) / [backend discovery](docs/contracts/desktop-worker-backend-discovery-v0.md) · 模型 [generic-worker](docs/contracts/generic-model-worker-v0a.md) · 工具 [web-research](docs/contracts/web-research-actuator-v0b.md) · 员工 [nova](docs/contracts/product-research-employee-v0c.md) · 界面 [experience](docs/contracts/workforce-experience-v0.md) / [lobby](docs/contracts/employee-lobby-v0.md) / [workspace](docs/contracts/founder-workspace-v0.md) / [integration](docs/contracts/founder-workspace-product-integration-v1.md) · 桌面 [relay-code](docs/contracts/relay-code-desktop-v0.md)
+- **历史**：[里程碑叙述](docs/milestones.md) · [迁移清单](docs/migration/from-flowcredit-worklab-v1.md)
+
+## 7. Engineering charter
+
+[AGENTS.md](AGENTS.md) 一页章程，对人类与 AI 协作者同样生效：
+
+1. clean re-foundation——禁止整目录复制旧仓库（`cp -R` 一律禁止）
+2. 三个 MVP 是最高优先级，任何 feature 不得高于主线
+3. 旧仓库 READ ONLY，只作 provenance；迁移 **capability by capability, contract by
+   contract, test by test**，逐项记录来源与验证
+4. 一次只做一个里程碑；声明完成必须给出证据
+5. Runtime truth > UI——不放 fake production data
+6. Founder = Authority——Agent 不写知识、不替 Founder 决定
+7. Git 与凭据安全——未经明确授权不 commit / 不 push；禁止 `git add .`
+
+## 8. Relationship to the old worklab repositories
+
+旧的 `FlowCredit-worklab` 系仓库（含其 worktree）**不再是产品主线**，角色是
+READ ONLY 的 R&D / Provenance / Historical Evidence Source。未来能力迁移遵循
+**capability by capability, contract by contract, test by test**，每一项都要在
+[迁移清单](docs/migration/from-flowcredit-worklab-v1.md) 中留下来源、提交与验证
+测试，禁止整目录复制。
+
+## 9. Next milestones
+
+1. **框架**：拆分 `packages/runtime/kernel.mjs` 与 `store.mjs`（蓝图见
+   [重构记录](docs/architecture/repository-restructure-2026-10.md)）
+2. **垂直切片**：原生 tool calling + 流式、真实 SearchProvider、Founder Decision UI
+   —— 让 Founder 第一次能在界面里点下 ACCEPT
+3. **Company Genesis**：MVP 1 从零开始
