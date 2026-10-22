@@ -46,6 +46,24 @@ export const DEFAULT_CODEX_COMMAND = Object.freeze(["codex"]);
 export const DEFAULT_VERIFICATION_TIMEOUT_MS = 120_000;
 export const CODEX_SANDBOX_MODE = "workspace-write";
 
+// The AI child never receives the host environment wholesale. Only an explicit
+// allowlist of process-level conveniences is forwarded; everything else —
+// credentials above all — must be handed over deliberately through the
+// documented `env` option, which reaches the child as-is and is auditable at
+// the call site. POSIX list: the backend targets macOS/Linux hosts.
+export const CODEX_CHILD_ENV_ALLOWLIST = Object.freeze([
+  "PATH",
+  "HOME",
+  "TERM",
+  "LANG",
+  "LC_ALL",
+  "LC_CTYPE",
+  "SHELL",
+  "USER",
+  "LOGNAME",
+]);
+const CHILD_ENV_ALLOWLIST = CODEX_CHILD_ENV_ALLOWLIST;
+
 const MAX_STDERR_BYTES = 8192;
 const MAX_GIT_OUTPUT_BYTES = 512 * 1024;
 const MAX_CHANGED_FILES_RECORDED = 50;
@@ -60,7 +78,7 @@ const CANCEL_SIGKILL_WAIT_MS = 2000;
 // never what someone wished it enforced.
 const KNOWN_LIMITATIONS = Object.freeze([
   "the Codex CLI sandbox (workspace-write) is not proven OS-level containment; H0 observed writes outside the assigned workspace",
-  "no network policy is enforced by this adapter; the child inherits the host environment",
+  "no network policy is enforced by this adapter; the child's network reachability is whatever the host grants",
   "TMPDIR, TMP and TEMP point at the run scratch directory by intent, not by proof",
 ]);
 
@@ -295,8 +313,11 @@ export function createCodexExecAdapter(options = {}) {
   const protectedList = Object.freeze([...protectedPaths]);
 
   function childEnvironment(scratchRoot) {
+    const forwarded = {};
+    for (const name of CHILD_ENV_ALLOWLIST)
+      if (process.env[name] !== undefined) forwarded[name] = process.env[name];
     return {
-      ...process.env,
+      ...forwarded,
       ...(env ?? {}),
       TMPDIR: scratchRoot,
       TMP: scratchRoot,

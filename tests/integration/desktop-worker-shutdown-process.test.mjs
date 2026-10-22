@@ -75,11 +75,24 @@ async function waitForLiveChild(pidDump) {
 
 // A real executable file that speaks the stub's protocol: the Runtime validates
 // it, probes `--version`, and spawns it as the Codex backend. `name` is what the
-// PATH lookup finds in the non-Desktop case.
-function codexExecutable(dir, { name = "codex-fixture.mjs" } = {}) {
+// PATH lookup finds in the non-Desktop case. The stub's own configuration is
+// baked into this file — the Codex child receives an allowlisted environment
+// (codex-exec-adapter-v1), so nothing the Runtime process carries in its env
+// reaches the stub implicitly.
+function codexExecutable(dir, { name = "codex-fixture.mjs", stubMode, stubPidDump } = {}) {
   mkdirSync(dir, { recursive: true });
   const path = join(dir, name);
-  writeFileSync(path, `#!${process.execPath}\nawait import(${JSON.stringify(STUB_URL)});\n`, "utf8");
+  const config = [
+    stubMode ? `process.env.FLOWCREDIT_STUB_MODE = ${JSON.stringify(stubMode)};` : "",
+    stubPidDump ? `process.env.FLOWCREDIT_STUB_PID_DUMP = ${JSON.stringify(stubPidDump)};` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  writeFileSync(
+    path,
+    `#!${process.execPath}\n${config}\nawait import(${JSON.stringify(STUB_URL)});\n`,
+    "utf8",
+  );
   chmodSync(path, 0o755);
   return path;
 }
@@ -136,8 +149,8 @@ async function seedRunningAttempt(runtime) {
 async function startHangingRuntime() {
   const dir = sandbox();
   const base = makeBaseRepo();
-  const executable = codexExecutable(join(dir, "bin"));
   const pidDump = join(dir, "codex-child.pid");
+  const executable = codexExecutable(join(dir, "bin"), { stubMode: "hang", stubPidDump: pidDump });
   const runtime = await startRuntime({
     dir: join(dir, "store"),
     coordination: false,
@@ -148,8 +161,6 @@ async function startHangingRuntime() {
       FLOWCREDIT_CODEX_REPO: base.repo,
       FLOWCREDIT_CODEX_BASE_REVISION: base.sha,
       FLOWCREDIT_CODEX_VERIFICATION: `${process.execPath} -e process.exit(0)`,
-      FLOWCREDIT_STUB_MODE: "hang",
-      FLOWCREDIT_STUB_PID_DUMP: pidDump,
     },
   });
   return { dir, storeDir: join(dir, "store"), runtime, pidDump };

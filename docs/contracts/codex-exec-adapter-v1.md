@@ -98,13 +98,17 @@ with a `workspace/` and a `scratch/` directory per attempt. This adapter fills i
 ## 5. Scratch containment and known limitations
 
 Before spawning, `TMPDIR`, `TMP` and `TEMP` are pointed at the run scratch
-directory and the child runs with `cwd = workspaceRoot`. The manifest states the
-honest facts, including:
+directory and the child runs with `cwd = workspaceRoot`. The child environment
+is an explicit allowlist (`CODEX_CHILD_ENV_ALLOWLIST`: `PATH`, `HOME`, `TERM`,
+`LANG`, `LC_ALL`, `LC_CTYPE`, `SHELL`, `USER`, `LOGNAME`) plus the caller's
+`env` option and the scratch TMPDIR — the host environment is never forwarded
+wholesale, so host credentials do not reach the AI process by default. The
+manifest states the honest facts, including:
 
 - the Codex CLI sandbox (`workspace-write`) is **not proven OS-level
   containment** — H0 observed writes outside the assigned workspace;
-- no network policy is enforced by this adapter; the child inherits the host
-  environment;
+- no network policy is enforced by this adapter; the child's network
+  reachability is whatever the host grants;
 - `TMPDIR`/`TMP`/`TEMP` redirection is intent, not proof;
 - the CLI additionally refuses commands that reach outside the workspace
   (H1 saw a reviewer's `cp -R`/`rm -rf` attempt into another `/tmp` path

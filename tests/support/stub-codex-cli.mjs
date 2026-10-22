@@ -48,6 +48,10 @@ if (envDump)
       cwd: process.cwd(),
       schemaPresent: schemaPath ? true : false,
       argv: args,
+      // Env-leak probes: what the child can and cannot see of the host.
+      envProbe: process.env.FLOWCREDIT_ENV_LEAK_PROBE ?? null,
+      stubMode: process.env.FLOWCREDIT_STUB_MODE ?? null,
+      pathPresent: process.env.PATH != null,
     }),
     "utf8",
   );

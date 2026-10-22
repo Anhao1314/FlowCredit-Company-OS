@@ -237,6 +237,38 @@ test("argv and environment are constructed without shell interpolation", async (
   }
 });
 
+test("the child environment is an allowlist: host-only variables do not reach the AI process", async () => {
+  const { dir, repo, sha } = makeRepo();
+  const { workspaceRoot, scratchRoot } = makeRunRoot(dir);
+  const envDump = join(dir, "env.json");
+  process.env.FLOWCREDIT_ENV_LEAK_PROBE = "host-secret-must-not-forward";
+  const adapter = adapterFor(repo, {
+    env: {
+      FLOWCREDIT_STUB_MODE: "execution-ok",
+      FLOWCREDIT_STUB_ENV_DUMP: envDump,
+    },
+  });
+  const fixture = executionInputFixture();
+  try {
+    const input = rebind(fixture.input, { workspaceRoot, scratchRoot, baseRevision: sha });
+    const handle = await adapter.start(input, { workspaceRoot, scratchRoot });
+    const terminal = normalizeAdapterResult(await adapter.wait(handle));
+    assert.equal(terminal.terminalStatus, "SUCCEEDED");
+    const env = JSON.parse(readFileSync(envDump, "utf8"));
+    assert.equal(
+      env.envProbe,
+      null,
+      "a variable that exists only in the host environment must not reach the AI child",
+    );
+    assert.equal(env.stubMode, "execution-ok", "the explicit env option is forwarded verbatim");
+    assert.equal(env.pathPresent, true, "the allowlist still forwards what the CLI needs to run");
+    assert.equal(env.TMPDIR, scratchRoot);
+  } finally {
+    delete process.env.FLOWCREDIT_ENV_LEAK_PROBE;
+    fixture.cleanup();
+  }
+});
+
 test("a non-empty run workspace is never reused", async () => {
   const { dir, repo, sha } = makeRepo();
   const { workspaceRoot, scratchRoot } = makeRunRoot(dir);
