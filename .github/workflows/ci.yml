@@ -19,6 +19,10 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      # The 22.x job is a compatibility guard: it runs the whole suite one
+      # major below the pin, so the bootstrap pin test skips itself there.
+      FLOWCREDIT_NODE_COMPAT_GUARD: ${{ matrix.node-version == '22.x' && '1' || '' }}
     strategy:
       # Both versions report independently: a 22.x-only regression must not
       # hide a 24.x one. 24.x is the support target (.nvmrc, engines <25);

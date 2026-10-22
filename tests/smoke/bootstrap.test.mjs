@@ -25,7 +25,13 @@ test("package.json declares ESM, the pinned Node line and no dependencies", () =
   assert.deepEqual(pkg.devDependencies ?? {}, {});
 });
 
-test("the running Node satisfies the repository pin", () => {
+test("the running Node satisfies the repository pin", (t) => {
+  // The 22.x CI compatibility-guard job runs the whole suite one major below
+  // the pin on purpose; the pin itself is asserted by the 24.x job.
+  if (process.env.FLOWCREDIT_NODE_COMPAT_GUARD === "1") {
+    t.skip("compatibility-guard job: the pin is asserted by the 24.x job");
+    return;
+  }
   const pinned = read(".nvmrc").trim();
   assert.match(pinned, /^24\.19\.\d+$/);
   const [major] = process.versions.node.split(".");
