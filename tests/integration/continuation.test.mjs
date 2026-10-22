@@ -1,6 +1,7 @@
 // v0B4 over the real process: the Runtime coordinates itself, a hard restart
 // converges on the same Work, and one Work's availability change resumes
 // another. Contract: docs/contracts/work-continuity-v0.md §8, §19.
+import { SCHEMA_VERSION } from "../../packages/runtime/index.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { rmSync } from "node:fs";
@@ -72,7 +73,7 @@ test("a Work the Runtime activated survives kill -9 and converges with no duplic
     // Recovery fences the dead attempt, and the startup drive continues the
     // same Work: a new run, the same single Task and Assignment.
     const after = await runtime.json("/status");
-    assert.equal(after.schemaVersion, 12);
+    assert.equal(after.schemaVersion, SCHEMA_VERSION);
     assert.equal(after.counts.tasks, 1, "no duplicate Task");
     assert.equal(after.counts.assignments, 1, "no duplicate Assignment");
     assert.equal(after.counts.workerRuns, 2, "the interrupted run, and the continuation of it");

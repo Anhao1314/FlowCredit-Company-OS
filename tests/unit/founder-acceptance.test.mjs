@@ -1,5 +1,6 @@
 // The Founder Decision: what ACCEPT means, what it refuses, and what it must
 // never touch. Contract: docs/contracts/founder-attention-acceptance-v0.md.
+import { SCHEMA_VERSION } from "../../packages/runtime/index.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { newActivityEvent } from "../../packages/work/records.mjs";
@@ -477,7 +478,7 @@ test("a decision is durable: it survives closing and reopening the store", () =>
 
     const reopened = reopenKernel(dir);
     try {
-      assert.equal(reopened.status().schemaVersion, 12);
+      assert.equal(reopened.status().schemaVersion, SCHEMA_VERSION);
       assert.equal(reopened.status().counts.founderDecisions, 1);
       assert.deepEqual(reopened.workProjection(flow.work.id), before);
       assert.deepEqual(

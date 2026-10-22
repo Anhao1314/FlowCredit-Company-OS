@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
-import { existsSync, rmSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import {
   openTempKernel,
@@ -167,6 +167,107 @@ test("foreign keys and the state/generation constraints are enforced by the stor
     );
     assert.equal(kernel.task(task.id).state, "RUNNING");
     assert.equal(kernel.task(task.id).generation, 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a pre-existing store is snapshotted before the migration chain runs", () => {
+  const { dir, kernel, cleanup } = openTempKernel();
+  try {
+    const { company } = seedCompanyAndWork(kernel);
+    // Force the store back one version: reopening must walk it forward again —
+    // and must not do so before a snapshot of the v12 facts exists.
+    kernel.store.db.exec("UPDATE schema_meta SET version=12");
+    kernel.close();
+
+    const backupPath = join(dir, `${STORE_FILE_NAME}.bak-v12`);
+    assert.ok(!existsSync(backupPath), "no snapshot exists before the migration is attempted");
+    const reopened = reopenKernel(dir);
+    assert.equal(reopened.status().schemaVersion, SCHEMA_VERSION);
+    assert.ok(existsSync(backupPath), "the migration is preceded by a crash-consistent snapshot");
+    const backup = new DatabaseSync(backupPath);
+    try {
+      const rows = backup.prepare("SELECT id, name FROM companies WHERE id=?").all(company.id);
+      assert.equal(rows.length, 1, "the snapshot holds the pre-migration facts");
+      assert.equal(rows[0].name, company.name);
+    } finally {
+      backup.close();
+    }
+    reopened.close();
+  } finally {
+    cleanup();
+  }
+});
+
+test("a fresh install snapshots nothing", () => {
+  const { dir, cleanup } = openTempKernel();
+  try {
+    const backups = readdirSync(dir).filter((name) => name.includes(".bak-v"));
+    assert.deepEqual(backups, [], "a brand-new store has no pre-migration facts to protect");
+  } finally {
+    cleanup();
+  }
+});
+
+test("an existing snapshot is left untouched on a re-open", () => {
+  const { dir, kernel, cleanup } = openTempKernel();
+  try {
+    kernel.close();
+    const backupPath = join(dir, `${STORE_FILE_NAME}.bak-v12`);
+    let db = new DatabaseSync(join(dir, STORE_FILE_NAME));
+    db.exec("UPDATE schema_meta SET version=12");
+    db.close();
+    const first = reopenKernel(dir);
+    first.close();
+    assert.ok(existsSync(backupPath), "the first pass creates the snapshot");
+    const before = readFileSync(backupPath);
+    // Second pass: downgrade again. The migration is idempotent
+    // (IF NOT EXISTS), so the re-open succeeds — and the first snapshot, the
+    // one that guarded the only real migration, must survive byte for byte.
+    db = new DatabaseSync(join(dir, STORE_FILE_NAME));
+    db.exec("UPDATE schema_meta SET version=12");
+    db.close();
+    const second = reopenKernel(dir);
+    second.close();
+    assert.deepEqual(readFileSync(backupPath), before, "the first snapshot is the good one");
+  } finally {
+    cleanup();
+  }
+});
+
+test("the delivery receipts are targeted lookups backed by the kind index", () => {
+  const { kernel, cleanup } = openTempKernel();
+  try {
+    const { company, work } = seedCompanyAndWork(kernel);
+    const store = kernel.store;
+    const append = (runId, kind, attempt) =>
+      store.appendActivity({
+        companyId: company.id,
+        workId: work.id,
+        taskId: null,
+        generation: null,
+        kind,
+        detail: { workerRunId: runId, attempt },
+        createdAt: new Date().toISOString(),
+      });
+    append("run_a", "WORKER_RESULT_SUBMITTED", 1);
+    append("run_a", "WORKER_RESULT_SUBMITTED", 2);
+    append("run_b", "WORKER_REVIEW_RESULT_SUBMITTED", 1);
+
+    const submitted = store.resultSubmissionForRun("run_a");
+    assert.equal(submitted.detail.workerRunId, "run_a");
+    assert.equal(submitted.detail.attempt, 2, "the newest delivery answers, never an older one");
+    const review = store.reviewResultSubmissionForRun("run_b");
+    assert.equal(review.detail.workerRunId, "run_b");
+    assert.equal(store.resultSubmissionForRun("run_b"), null);
+    assert.equal(store.reviewResultSubmissionForRun("run_a"), null);
+    assert.ok(
+      store.db
+        .prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='activity_kind_sequence'")
+        .get(),
+      "the delivery read walks an index, not the whole stream",
+    );
   } finally {
     cleanup();
   }

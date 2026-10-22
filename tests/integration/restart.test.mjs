@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { rmSync } from "node:fs";
 import { tempStoreDir } from "../support/kernel.mjs";
 import { startRuntime } from "../../scripts/lib/runtime-process.mjs";
+import { SCHEMA_VERSION } from "../../packages/runtime/index.mjs";
 
 test("a work survives a hard process restart, is recovered honestly, and can be finished", async () => {
   const dir = tempStoreDir();
@@ -50,7 +51,7 @@ test("a work survives a hard process restart, is recovered honestly, and can be 
       "the restarted process reports what it recovered",
     );
     const status = await runtime.json("/status");
-    assert.equal(status.schemaVersion, 12, "a fresh v0A store migrates to schema v12");
+    assert.equal(status.schemaVersion, SCHEMA_VERSION, "a fresh v0A store migrates to the current schema");
     assert.equal(status.recovery.count, 1);
     assert.equal(status.tasksByState.INTERRUPTED, 1);
 
@@ -641,7 +642,7 @@ test("a Founder Decision survives a hard restart and is never re-adjudicated", a
     runtime = await startRuntime({ dir });
     assert.match(runtime.output(), /FlowCredit runtime ready/);
     const status = await runtime.json("/status");
-    assert.equal(status.schemaVersion, 12);
+    assert.equal(status.schemaVersion, SCHEMA_VERSION);
     assert.equal(status.counts.founderDecisions, 1);
     assert.equal(
       status.recovery.count,

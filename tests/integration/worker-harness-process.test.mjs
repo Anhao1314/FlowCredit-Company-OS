@@ -5,6 +5,7 @@
 // Continuation Driver installed. Everything below travels over HTTP: the
 // Founder's commands, the Runtime's coordination, the WorkerHost's execution
 // of both the producing attempt and the Reviewer attempt.
+import { SCHEMA_VERSION } from "../../packages/runtime/index.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -84,7 +85,7 @@ test("the runtime process executes a Work, reviews it and waits for the Founder"
     assert.equal(reviewDetail.review.reviewerWorkerRunId, reviewDetail.runs[0].id);
 
     const status = await runtime.json("/status");
-    assert.equal(status.schemaVersion, 12);
+    assert.equal(status.schemaVersion, SCHEMA_VERSION);
     assert.equal(status.counts.reviews, 1);
     assert.equal(status.counts.founderDecisions, 0);
     assert.equal(status.counts.workerExecutionBindings >= 2, true, "both attempts were bound");
@@ -117,7 +118,7 @@ test("the runtime process executes a Work, reviews it and waits for the Founder"
       "the Host found no orphaned attempt to reconcile",
     );
     const after = await runtime.json("/status");
-    assert.equal(after.schemaVersion, 12);
+    assert.equal(after.schemaVersion, SCHEMA_VERSION);
     assert.equal(after.counts.reviews, 1, "the Review and its receipt survive the restart");
     assert.equal(after.counts.founderDecisions, 1);
     assert.equal(after.counts.workerExecutionBindings >= 2, true);

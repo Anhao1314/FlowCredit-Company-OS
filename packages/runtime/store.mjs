@@ -5,11 +5,11 @@
 // never see a row shape (contract §11). Immutability and append-only rules are
 // enforced by database triggers, not by convention.
 import { DatabaseSync } from "node:sqlite";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { kernelError } from "./errors.mjs";
 
-export const SCHEMA_VERSION = 12;
+export const SCHEMA_VERSION = 13;
 export const STORE_FILE_NAME = "kernel.sqlite";
 
 // The v1 table set, kept verbatim: it is both the starting point of a fresh
@@ -497,6 +497,16 @@ CREATE TRIGGER IF NOT EXISTS founder_hiring_command_receipts_no_delete
   BEGIN SELECT RAISE(ABORT,'HIRING_COMMAND_RECEIPT_IMMUTABLE'); END;
 `;
 
+// schema v13: the Activity delivery indexes. The delivery receipt reads
+// (resultSubmissionForRun / reviewResultSubmissionForRun) used to pull every
+// row of one kind out of the Activity stream and filter in JS; with the index
+// the same read stays bounded by one kind instead of by company history.
+// Purely additive, nothing is deleted, recreated or backfilled — the same
+// shape the v4 Activity index introduced.
+const V13_INDEXES_SQL = `
+CREATE INDEX IF NOT EXISTS activity_kind_sequence ON activity(kind, sequence);
+`;
+
 const rowToToolActionReceipt = (row) => row && ({
   sequence: row.sequence,
   workerRunId: row.worker_run_id,
@@ -773,6 +783,12 @@ export class KernelStore {
     }
     const version = this.db.prepare("SELECT version FROM schema_meta").get()?.version;
     if (version === SCHEMA_VERSION) return;
+    // A store that already existed and is about to be walked forward gets one
+    // consistent snapshot first. The migration chain is the only writer of
+    // irreversible change in this process; the snapshot caps its blast radius
+    // at "restore the backup from one version ago". Fresh installs created
+    // above have nothing to protect and never snapshot.
+    if (meta && version < SCHEMA_VERSION) this.#snapshotBeforeMigration(version);
     // Stepwise: an old store is walked forward one version at a time, so every
     // migration step is exercised on every upgrade path, not only on fresh
     // installs. Each step is its own transaction.
@@ -797,12 +813,27 @@ export class KernelStore {
       this.transaction(() => this.#migrateV10ToV11());
     if (this.db.prepare("SELECT version FROM schema_meta").get()?.version === 11)
       this.transaction(() => this.#migrateV11ToV12());
+    if (this.db.prepare("SELECT version FROM schema_meta").get()?.version === 12)
+      this.transaction(() => this.#migrateV12ToV13());
     if (this.db.prepare("SELECT version FROM schema_meta").get()?.version === SCHEMA_VERSION)
       return;
     throw kernelError(
       "INCOMPATIBLE_SCHEMA_VERSION",
       `store schema version ${version} is not supported by this runtime (expected ${SCHEMA_VERSION})`,
     );
+  }
+
+  // One crash-consistent pre-migration snapshot, named for the version being
+  // upgraded FROM. VACUUM INTO reads through the WAL, so the copy is complete
+  // without a checkpoint. Idempotent: if the snapshot for this version already
+  // exists (a previous attempt died mid-migration and the store was reopened),
+  // it is left untouched — the first snapshot is the good one. A failed
+  // snapshot aborts the open: migrating without a backup is exactly the
+  // failure mode this exists to prevent.
+  #snapshotBeforeMigration(fromVersion) {
+    const backupPath = `${this.path}.bak-v${fromVersion}`;
+    if (existsSync(backupPath)) return;
+    this.db.prepare("VACUUM INTO ?").run(backupPath);
   }
 
   // Explicit v1 → v2 migration. Adds the workforce tables and the nullable
@@ -903,6 +934,11 @@ export class KernelStore {
   #migrateV11ToV12() {
     this.db.exec(V12_TABLES_SQL);
     this.db.prepare("UPDATE schema_meta SET version=?").run(12);
+  }
+
+  #migrateV12ToV13() {
+    this.db.exec(V13_INDEXES_SQL);
+    this.db.prepare("UPDATE schema_meta SET version=?").run(13);
   }
 
   get schemaVersion() {
@@ -1189,33 +1225,28 @@ export class KernelStore {
   }
 
   // The submission receipt of a WorkerRun, read from the append-only Activity
-  // stream. A delivery is rare, so filtering by kind first keeps this bounded
-  // by the number of deliveries rather than by the history of the company.
+  // stream. One WorkerRun delivers exactly one result, so the kind index plus
+  // a json_extract on the delivery's own workerRunId answers this in one
+  // targeted lookup — bounded by one kind, never by company history.
   resultSubmissionForRun(workerRunId) {
-    return (
-      this.db
-        .prepare(
-          "SELECT * FROM activity WHERE kind='WORKER_RESULT_SUBMITTED' ORDER BY sequence DESC",
-        )
-        .all()
-        .map(rowToActivity)
-        .find((event) => event.detail?.workerRunId === workerRunId) ?? null
-    );
+    const row = this.db
+      .prepare(
+        "SELECT * FROM activity WHERE kind='WORKER_RESULT_SUBMITTED' AND json_extract(detail,'$.workerRunId')=? ORDER BY sequence DESC LIMIT 1",
+      )
+      .get(workerRunId);
+    return rowToActivity(row) ?? null;
   }
 
   // The Reviewer-delivery receipt of a WorkerRun, same append-only pattern and
-  // same bounded cost: one WorkerRun delivers either an artifact or a judgment,
-  // never both.
+  // same targeted lookup: one WorkerRun delivers either an artifact or a
+  // judgment, never both.
   reviewResultSubmissionForRun(workerRunId) {
-    return (
-      this.db
-        .prepare(
-          "SELECT * FROM activity WHERE kind='WORKER_REVIEW_RESULT_SUBMITTED' ORDER BY sequence DESC",
-        )
-        .all()
-        .map(rowToActivity)
-        .find((event) => event.detail?.workerRunId === workerRunId) ?? null
-    );
+    const row = this.db
+      .prepare(
+        "SELECT * FROM activity WHERE kind='WORKER_REVIEW_RESULT_SUBMITTED' AND json_extract(detail,'$.workerRunId')=? ORDER BY sequence DESC LIMIT 1",
+      )
+      .get(workerRunId);
+    return rowToActivity(row) ?? null;
   }
 
   // --- status ---------------------------------------------------------------

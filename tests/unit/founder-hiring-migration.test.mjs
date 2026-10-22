@@ -1,4 +1,5 @@
 import test from "node:test";
+import { SCHEMA_VERSION } from "../../packages/runtime/index.mjs";
 import assert from "node:assert/strict";
 import { openTempKernel, reopenKernel } from "../support/kernel.mjs";
 import { createFounderHiringCommands } from "../../packages/product/founder-hiring.mjs";
@@ -20,7 +21,7 @@ test("v11 Hiring facts migrate to v12 without invented Founder product requests"
     kernel.store.db.exec("DROP TABLE founder_hiring_command_receipts; UPDATE schema_meta SET version=11");
     kernel.close();
     kernel = reopenKernel(env.dir);
-    assert.equal(kernel.status().schemaVersion, 12);
+    assert.equal(kernel.status().schemaVersion, SCHEMA_VERSION);
     assert.equal(kernel.employeeHiring(draft.employee.id).state, "DRAFT");
     assert.equal(kernel.employeeHiring(draft.employee.id).basis, draftBasis);
     assert.equal(kernel.employeeHiring(legacy.id).origin, "LEGACY_OR_SEEDED");

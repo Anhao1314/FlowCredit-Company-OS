@@ -1,4 +1,5 @@
 import test from "node:test";
+import { SCHEMA_VERSION } from "../../packages/runtime/index.mjs";
 import assert from "node:assert/strict";
 import { openTempKernel, reopenKernel } from "../support/kernel.mjs";
 
@@ -14,7 +15,7 @@ test("v10 Employees migrate without fabricated Founder draft or trial history", 
     env.kernel.store.db.exec("DROP TABLE employee_hiring_events; UPDATE schema_meta SET version=10");
     env.kernel.close();
     reopened = reopenKernel(env.dir);
-    assert.equal(reopened.status().schemaVersion, 12);
+    assert.equal(reopened.status().schemaVersion, SCHEMA_VERSION);
     assert.equal(reopened.employee(employee.id).id, employee.id);
     assert.equal(reopened.employeeHiring(employee.id).origin, "LEGACY_OR_SEEDED");
     assert.equal(reopened.employeeHiring(employee.id).trial, null);
