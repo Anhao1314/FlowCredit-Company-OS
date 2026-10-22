@@ -17,6 +17,7 @@
     "test:workspace": "node --test tests/unit/workspace-domain.test.mjs tests/unit/workspace-adapter.test.mjs tests/unit/workspace-placement.test.mjs tests/unit/workspace-board-layout.test.mjs tests/unit/workspace-subpages.test.mjs tests/unit/workspace-source.test.mjs tests/integration/workspace-http.test.mjs tests/integration/workspace-founder-work.test.mjs",
     "test": "node --test",
     "test:coverage": "node --test --experimental-test-coverage",
+    "test:coverage:gate": "node scripts/coverage-gate.mjs",
     "lint": "node tooling/node_modules/eslint/bin/eslint.js --config tooling/eslint.config.mjs .",
     "check": "node scripts/check.mjs"
   }

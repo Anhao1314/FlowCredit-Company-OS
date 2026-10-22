@@ -1,8 +1,9 @@
 name: FlowCredit CI
 
 # The smallest trustworthy remote regression gate for the frozen baseline:
-# structural check + full Node test suite. No model providers, no network
-# services, no secrets — the suite is deterministic and offline-friendly.
+# structural check + full Node test suite + ESLint + the coverage gate. No
+# model providers, no network services, no secrets — the suite is
+# deterministic and offline-friendly.
 on:
   pull_request:
   push:
@@ -43,3 +44,37 @@ jobs:
         run: node scripts/check.mjs
       - name: Full test suite
         run: node --test
+
+  lint:
+    # The lint baseline lives in the dev-only tooling/ workspace (its own
+    # lockfile), so CI installs it explicitly instead of relying on a local
+    # node_modules.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24.x"
+      - name: Install the dev-only tooling workspace
+        run: npm ci --prefix tooling
+      - name: ESLint
+        run: node tooling/node_modules/eslint/bin/eslint.js --config tooling/eslint.config.mjs .
+
+  coverage:
+    # Coverage runs on the support target only: the runner's coverage summary
+    # format is parsed by scripts/coverage-gate.mjs, which enforces the README
+    # baseline minus a small drift margin.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24.x"
+      - name: Coverage gate
+        run: node scripts/coverage-gate.mjs
